@@ -9,9 +9,6 @@ from azure.storage.blob import BlobServiceClient
 # Create a Flask application instance
 app = Flask(__name__)
 
-# Global variable for storing the index
-index = None
-
 # Function to preprocess a single document
 def preprocess_document(document):
     # Remove non-ASCII characters
@@ -33,8 +30,6 @@ def preprocess_document(document):
     # Word stemming (optional)
     stemmer = PorterStemmer()
     tokens = [stemmer.stem(token) for token in tokens]
-
-    print(f"Preprocessed document: {tokens}")
 
     return tokens
 
@@ -78,22 +73,8 @@ def home():
 # Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
-    global index
-
     search_word = request.form['query']
-
-    print(f"Searching for word: {search_word}")
-
-    # Preprocess the documents
-    preprocessed_docs = preprocess_documents_from_blob_storage(connection_string, container_name)
-
-    # Build the index
-    index = build_index(preprocessed_docs)
-    
-    print("value of the index is ____________________________________________________________________-")
-    print(index)
-
-    if index is not None and search_word in index:
+    if search_word in index:
         matching_documents = index[search_word]
         results = []
         for doc_id, position in matching_documents:
@@ -107,11 +88,16 @@ def search():
 
     return render_template('results.html', results=results)
 
+# Run the Flask application
 if __name__ == '__main__':
     # Azure Blob Storage connection string and container name
     connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
     container_name = "sampl1"
 
-    print("index value is :")
+    # Preprocess the documents from Azure Blob Storage
+    preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
 
-    app.run(debug = True)
+    # Build the index
+    index = build_index(preprocessed_documents)
+
+    app.run()
