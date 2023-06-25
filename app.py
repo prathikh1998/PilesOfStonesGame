@@ -1,6 +1,15 @@
 import os
 import re
 import string
+import nltk
+import nltk
+
+# Check if NLTK stopwords are already downloaded
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    # Download stopwords corpus
+    nltk.download('stopwords')
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
