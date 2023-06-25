@@ -34,6 +34,8 @@ def preprocess_document(document):
     stemmer = PorterStemmer()
     tokens = [stemmer.stem(token) for token in tokens]
 
+    print(f"Preprocessed document: {tokens}")
+
     return tokens
 
 # Function to preprocess all the documents in a directory
@@ -55,7 +57,6 @@ def preprocess_documents_from_blob_storage(connection_string, container_name):
         document_content = blob_client.download_blob().readall().decode("utf-8")
         tokens = preprocess_document(document_content)
         preprocessed_docs.append(tokens)
-        print(f"Preprocessed document: {tokens}")
 
     return preprocessed_docs
 
@@ -80,6 +81,9 @@ def search():
     global index
 
     search_word = request.form['query']
+
+    print(f"Searching for word: {search_word}")
+
     if index is not None and search_word in index:
         matching_documents = index[search_word]
         results = []
@@ -100,7 +104,6 @@ if __name__ == '__main__':
     connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
     container_name = "sampl1"
 
-    # Preprocess the documents from Azure Blob Storage
     preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
 
     # Build the index
