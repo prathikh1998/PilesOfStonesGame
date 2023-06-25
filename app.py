@@ -89,7 +89,8 @@ def search():
 
     # Build the index
     index = build_index(preprocessed_docs)
-
+    
+    print("value of the index is ____________________________________________________________________-")
     print(index)
 
     if index is not None and search_word in index:
