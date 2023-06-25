@@ -112,4 +112,6 @@ if __name__ == '__main__':
     connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
     container_name = "sampl1"
 
-    app.run()
+    print("index value is :")
+
+    app.run(debug = True)
