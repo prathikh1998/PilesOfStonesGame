@@ -1,0 +1,7 @@
+flask
+pyodbc
+scikit-learn
+Flask-WTF
+Flask
+nltk
+azure-storage-blob
