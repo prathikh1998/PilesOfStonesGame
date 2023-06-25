@@ -8,8 +8,12 @@ from flask import Flask, render_template, request
 from azure.storage.blob import BlobServiceClient
 
 nltk.download('stopwords')
+
 # Create a Flask application instance
 app = Flask(__name__)
+
+# Declare the global variable for the index
+index = {}
 
 # Function to preprocess a single document
 def preprocess_document(document):
@@ -75,6 +79,8 @@ def home():
 # Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
+    global index  # Declare the index variable as global
+
     search_word = request.form['query']
     if search_word in index:
         matching_documents = index[search_word]
