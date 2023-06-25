@@ -80,7 +80,7 @@ def search():
     global index
 
     search_word = request.form['query']
-    if search_word in index:
+    if index is not None and search_word in index:
         matching_documents = index[search_word]
         results = []
         for doc_id, position in matching_documents:
