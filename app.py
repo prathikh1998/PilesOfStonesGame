@@ -56,11 +56,6 @@ def preprocess_documents_from_blob_storage(connection_string, container_name):
         tokens = preprocess_document(document_content)
         preprocessed_docs.append(tokens)
 
-    # Write preprocessed documents to a file
-    with open("preprocessed_docs.txt", "w") as file:
-        for i, doc in enumerate(preprocessed_docs):
-            file.write(f"Document {i+1}: {doc}\n")
-
     return preprocessed_docs
 
 def build_index(preprocessed_docs):
@@ -109,5 +104,10 @@ if __name__ == '__main__':
 
     # Build the index
     index = build_index(preprocessed_documents)
+
+    # Write the preprocessed documents to a file
+    with open("preprocessed_docs.txt", "w") as file:
+        for i, doc in enumerate(preprocessed_documents):
+            file.write(f"Document {i+1}: {doc}\n")
 
     app.run()
