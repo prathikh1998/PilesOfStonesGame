@@ -59,6 +59,7 @@ def preprocess_documents_from_blob_storage(connection_string, container_name):
     return preprocessed_docs
 
 def build_index(preprocessed_docs):
+    global index
     index = {}
     for doc_id, doc in enumerate(preprocessed_docs):
         for position, word in enumerate(doc):
@@ -66,7 +67,6 @@ def build_index(preprocessed_docs):
                 index[word].append((doc_id, position))
             else:
                 index[word] = [(doc_id, position)]
-    return index
 
 # Route for the home page
 @app.route('/')
@@ -79,7 +79,7 @@ def search():
     global index
 
     search_word = request.form['query']
-    if search_word in index:
+    if index is not None and search_word in index:
         matching_documents = index[search_word]
         results = []
         for doc_id, position in matching_documents:
@@ -103,6 +103,6 @@ if __name__ == '__main__':
     preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
 
     # Build the index
-    index = build_index(preprocessed_documents)
+    build_index(preprocessed_documents)
 
     app.run()
