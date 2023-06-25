@@ -109,4 +109,4 @@ if __name__ == '__main__':
     # Build the index
     index = build_index(preprocessed_documents)
 
-    app.run()
+    app.run(debug = True)
