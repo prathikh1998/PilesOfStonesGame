@@ -102,4 +102,7 @@ if __name__ == '__main__':
     # Build the index
     index = build_index(preprocessed_documents)
 
+    app.config['PROPAGATE_EXCEPTIONS'] = True
+    app.config['DEBUG'] = True
+
     app.run()
