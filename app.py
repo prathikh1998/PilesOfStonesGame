@@ -84,12 +84,6 @@ def search():
 
     print(f"Searching for word: {search_word}")
 
-    # Preprocess the documents
-    preprocessed_docs = preprocess_documents_from_blob_storage(connection_string, container_name)
-
-    # Build the index
-    index = build_index(preprocessed_docs)
-
     if index is not None and search_word in index:
         matching_documents = index[search_word]
         results = []
@@ -104,9 +98,15 @@ def search():
 
     return render_template('results.html', results=results)
 
+# Run the Flask application
 if __name__ == '__main__':
     # Azure Blob Storage connection string and container name
     connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
     container_name = "sampl1"
 
-    app.run()
+    preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
+
+    # Build the index
+    index = build_index(preprocessed_documents)
+
+    app.run(debug = True)
