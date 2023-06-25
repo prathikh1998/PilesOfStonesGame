@@ -7,6 +7,7 @@ from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
 from azure.storage.blob import BlobServiceClient
 
+nltk.download('stopwords')
 # Create a Flask application instance
 app = Flask(__name__)
 
@@ -101,4 +102,4 @@ if __name__ == '__main__':
     # Build the index
     index = build_index(preprocessed_documents)
 
-    app.run(debug = True)
+    app.run()
