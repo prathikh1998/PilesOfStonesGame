@@ -9,6 +9,9 @@ from azure.storage.blob import BlobServiceClient
 # Create a Flask application instance
 app = Flask(__name__)
 
+# Global variable for storing the index
+index = None
+
 # Function to preprocess a single document
 def preprocess_document(document):
     # Remove non-ASCII characters
@@ -73,6 +76,8 @@ def home():
 # Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
+    global index
+
     search_word = request.form['query']
     if search_word in index:
         matching_documents = index[search_word]
