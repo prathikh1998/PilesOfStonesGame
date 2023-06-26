@@ -5,7 +5,6 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
-from azure.storage.blob import BlobServiceClient
 
 nltk.download('stopwords')
 
@@ -40,24 +39,17 @@ def preprocess_document(document):
     return tokens
 
 # Function to preprocess all the documents in a directory
-def preprocess_documents_from_blob_storage(connection_string, container_name):
+def preprocess_documents_from_folder(directory):
     preprocessed_docs = []
 
-    # Create a BlobServiceClient object
-    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-
-    # Get a reference to the container
-    container_client = blob_service_client.get_container_client(container_name)
-
-    # List all the blobs in the container
-    blobs = container_client.list_blobs()
-
-    # Iterate over the blobs and preprocess the documents
-    for blob in blobs:
-        blob_client = container_client.get_blob_client(blob.name)
-        document_content = blob_client.download_blob().readall().decode("utf-8")
-        tokens = preprocess_document(document_content)
-        preprocessed_docs.append(tokens)
+    # Iterate over the files in the directory
+    for filename in os.listdir(directory):
+        if filename.endswith('.txt'):
+            filepath = os.path.join(directory, filename)
+            with open(filepath, 'r', encoding='utf-8') as file:
+                document_content = file.read()
+                tokens = preprocess_document(document_content)
+                preprocessed_docs.append(tokens)
 
     return preprocessed_docs
 
@@ -101,14 +93,11 @@ def search():
 
 # Run the Flask application
 if __name__ == '__main__':
-    # Azure Blob Storage connection string and container name
-    connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
-    container_name = "sampl1"
+    # Directory where the documents are stored
+    documents_directory = 'presidential_databases'
 
-    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-
-    # Preprocess the documents from Azure Blob Storage
-    preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
+    # Preprocess the documents from the folder
+    preprocessed_documents = preprocess_documents_from_folder(documents_directory)
 
     # Build the index
     index = build_index(preprocessed_documents)
