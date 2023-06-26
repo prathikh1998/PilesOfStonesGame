@@ -119,8 +119,19 @@ if __name__ == '__main__':
     connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
     container_name = "sampl1"
 
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+    # Attempt to list the containers in the storage account
+    containers = blob_service_client.list_containers()
+
+    # If the containers are listed successfully, it means the storage account is accessible
+    print("Storage account is accessible. Containers:")
+    for container in containers:
+        print(container.name)
+    
     # Preprocess the documents from Azure Blob Storage
     preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
+
 
     # Build the index
     index = build_index(preprocessed_documents)
