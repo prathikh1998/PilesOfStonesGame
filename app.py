@@ -46,6 +46,7 @@ def preprocess_documents_from_folder(directory):
     for filename in os.listdir(directory):
         if filename.endswith('.txt'):
             filepath = os.path.join(directory, filename)
+            print(f"Processing file: {filepath}")
             with open(filepath, 'r', encoding='utf-8') as file:
                 document_content = file.read()
                 tokens = preprocess_document(document_content)
