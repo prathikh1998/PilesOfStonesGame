@@ -8,7 +8,11 @@
     {% if results %}
         <ul>
             {% for result in results %}
-                <li>Match found in Document {{ result.document_id }}, Position {{ result.position }}</li>
+                <li>
+                    Match found in Document {{ result.document_id }},
+                    Position {{ result.position }},
+                    Tokens: {{ result.tokens }}
+                </li>
             {% endfor %}
         </ul>
     {% else %}
