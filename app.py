@@ -92,6 +92,7 @@ def search():
     return render_template('results.html', results=results)
 
 
+
 # Run the Flask application
 if __name__ == '__main__':
     # Directory where the documents are stored
