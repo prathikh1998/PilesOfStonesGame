@@ -5,6 +5,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
+from azure.storage.blob import BlobServiceClient
 
 nltk.download('stopwords')
 
@@ -39,19 +40,23 @@ def preprocess_document(document):
 
     return tokens
 
-# Function to preprocess all the documents in a directory
-def preprocess_documents_from_folder(directory):
+# Function to preprocess all the documents in Azure Storage
+def preprocess_documents_from_azure_storage(container_name):
     preprocessed_docs = []
 
-    # Iterate over the files in the directory
-    for filename in os.listdir(directory):
-        if filename.endswith('.txt'):
-            filepath = os.path.join(directory, filename)
-            print(f"Processing file: {filepath}")
-            with open(filepath, 'r', encoding='utf-8') as file:
-                document_content = file.read()
-                tokens = preprocess_document(document_content)
-                preprocessed_docs.append(tokens)
+    # Connect to the Azure Storage account
+    connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(container_name)
+
+    # Iterate over the blobs in the container
+    for blob in container_client.list_blobs():
+        if blob.name.endswith('.txt'):
+            print(f"Processing blob: {blob.name}")
+            blob_client = container_client.get_blob_client(blob.name)
+            document_content = blob_client.download_blob().readall().decode('utf-8')
+            tokens = preprocess_document(document_content)
+            preprocessed_docs.append(tokens)
 
     return preprocessed_docs
 
@@ -90,6 +95,13 @@ def search():
     else:
         results = []
 
+    # Preprocess the documents from Azure Storage
+    container_name = "sampl1"
+    preprocessed_documents = preprocess_documents_from_azure_storage(container_name)
+
+    # Build the index
+    index = build_index(preprocessed_documents)
+
     # Preprocess all documents and get all tokens
     all_tokens = [token for doc_tokens in preprocessed_documents for token in doc_tokens]
 
@@ -97,15 +109,6 @@ def search():
 
 # Run the Flask application
 if __name__ == '__main__':
-    # Directory where the documents are stored
-    documents_directory = './presidential_databases/'
-
-    # Preprocess the documents from the folder
-    preprocessed_documents = preprocess_documents_from_folder(documents_directory)
-
-    # Build the index
-    index = build_index(preprocessed_documents)
-
     app.config['PROPAGATE_EXCEPTIONS'] = True
     app.config['DEBUG'] = True
 
