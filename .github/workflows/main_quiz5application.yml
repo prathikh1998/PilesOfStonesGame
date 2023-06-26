@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'quiz5application'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DDC191944BC54F21A3301E502F55ABE4 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_55F66C9CDC5C4D9AA23D0CE5DECCF9D6 }}
