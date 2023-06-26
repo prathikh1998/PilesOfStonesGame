@@ -77,13 +77,21 @@ def home():
     return render_template('index.html')
 
 # Route for handling search requests
+# Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
     global index  # Declare the index variable as global
 
     search_word = request.form['query']
+    print("Search word:", search_word)  # Add this debug statement
+
+    print("the index is")
+    print(index)
+
     if search_word in index:
         matching_documents = index[search_word]
+        print("matching documents is ")
+        print(matching_documents)
         results = []
         for doc_id, position in matching_documents:
             result = {
@@ -95,7 +103,6 @@ def search():
     else:
         results = []
 
-    print("The results are")
     # Print the results in the console
     for result in results:
         print("Document ID:", result['document_id'])
@@ -104,6 +111,7 @@ def search():
         print()
 
     return render_template('results.html', results=results)
+
 
 # Run the Flask application
 if __name__ == '__main__':
