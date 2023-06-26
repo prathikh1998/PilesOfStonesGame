@@ -77,21 +77,14 @@ def home():
     return render_template('index.html')
 
 # Route for handling search requests
-# Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
     global index  # Declare the index variable as global
 
     search_word = request.form['query']
-    print("Search word:", search_word)  # Add this debug statement
-
-    print("the index is")
-    print(index)
 
     if search_word in index:
         matching_documents = index[search_word]
-        print("matching documents is ")
-        print(matching_documents)
         results = []
         for doc_id, position in matching_documents:
             result = {
@@ -102,13 +95,6 @@ def search():
             results.append(result)
     else:
         results = []
-
-    # Print the results in the console
-    for result in results:
-        print("Document ID:", result['document_id'])
-        print("Position:", result['position'])
-        print("Tokens:", result['tokens'])
-        print()
 
     return render_template('results.html', results=results)
 
@@ -121,17 +107,8 @@ if __name__ == '__main__':
 
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
-    # Attempt to list the containers in the storage account
-    containers = blob_service_client.list_containers()
-
-    # If the containers are listed successfully, it means the storage account is accessible
-    print("Storage account is accessible. Containers:")
-    for container in containers:
-        print(container.name)
-    
     # Preprocess the documents from Azure Blob Storage
     preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
-
 
     # Build the index
     index = build_index(preprocessed_documents)
