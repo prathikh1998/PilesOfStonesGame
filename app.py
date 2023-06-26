@@ -96,7 +96,7 @@ def search():
 # Run the Flask application
 if __name__ == '__main__':
     # Directory where the documents are stored
-    documents_directory = 'presidential_databases'
+    documents_directory = './presidential_databases/'
 
     # Preprocess the documents from the folder
     preprocessed_documents = preprocess_documents_from_folder(documents_directory)
