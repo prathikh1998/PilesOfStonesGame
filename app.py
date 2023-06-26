@@ -95,6 +95,7 @@ def search():
     else:
         results = []
 
+    print("The results are")
     # Print the results in the console
     for result in results:
         print("Document ID:", result['document_id'])
