@@ -70,6 +70,7 @@ def home():
     return render_template('index.html')
 
 # Route for handling search requests
+# Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
     global index  # Declare the index variable as global
@@ -89,7 +90,11 @@ def search():
     else:
         results = []
 
-    return render_template('results.html', results=results)
+    # Preprocess all documents and get all tokens
+    all_tokens = [token for doc_tokens in preprocessed_documents for token in doc_tokens]
+
+    return render_template('results.html', results=results, all_tokens=all_tokens)
+
 
 
 
