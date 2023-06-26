@@ -8,15 +8,18 @@
     {% if results %}
         <ul>
             {% for result in results %}
-                <li>
-                    Match found in Document {{ result.document_id }},
-                    Position {{ result.position }},
-                    Tokens: {{ result.tokens }}
-                </li>
+                <li>Match found in Document {{ result.document_id }}, Position {{ result.position }}</li>
             {% endfor %}
         </ul>
     {% else %}
         <p>No matching results found.</p>
     {% endif %}
+
+    <h2>All Tokens</h2>
+    <ul>
+        {% for token in all_tokens %}
+            <li>{{ token }}</li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
