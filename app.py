@@ -11,8 +11,9 @@ nltk.download('stopwords')
 # Create a Flask application instance
 app = Flask(__name__)
 
-# Declare the global variable for the index
+# Declare the global variables
 index = {}
+preprocessed_documents = []
 
 # Function to preprocess a single document
 def preprocess_document(document):
@@ -70,10 +71,9 @@ def home():
     return render_template('index.html')
 
 # Route for handling search requests
-# Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
-    global index  # Declare the index variable as global
+    global index, preprocessed_documents  # Declare the index and preprocessed_documents as global
 
     search_word = request.form['query']
 
@@ -94,9 +94,6 @@ def search():
     all_tokens = [token for doc_tokens in preprocessed_documents for token in doc_tokens]
 
     return render_template('results.html', results=results, all_tokens=all_tokens)
-
-
-
 
 # Run the Flask application
 if __name__ == '__main__':
