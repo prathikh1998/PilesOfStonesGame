@@ -88,11 +88,19 @@ def search():
         for doc_id, position in matching_documents:
             result = {
                 'document_id': doc_id,
-                'position': position
+                'position': position,
+                'tokens': preprocessed_documents[doc_id]  # Add the 'tokens' key
             }
             results.append(result)
     else:
         results = []
+
+    # Print the results in the console
+    for result in results:
+        print("Document ID:", result['document_id'])
+        print("Position:", result['position'])
+        print("Tokens:", result['tokens'])
+        print()
 
     return render_template('results.html', results=results)
 
