@@ -74,10 +74,11 @@ def build_index(preprocessed_docs):
                 index[word] = [(doc_id, position)]
     return index
 
+# Function to search for combinations of words in close proximity
 def search_combinations(index, search_words, proximity):
     matching_documents = []
     if all(word in index for word in search_words if word is not None):
-        positions = [index[word] for word in search_words if word is not None]
+        positions = [index[word] for word in search_words]
         for doc_id, positions_1 in positions[0]:
             if isinstance(positions_1, int):  # Handle case where positions_1 is an integer
                 positions_1 = [positions_1]
@@ -101,7 +102,6 @@ def search_combinations(index, search_words, proximity):
                     matching_documents.append((doc_id, position_1))
 
     return matching_documents
-
 
 # Function to get the paragraphs from a document based on positions
 def get_paragraphs(document_id, positions):
