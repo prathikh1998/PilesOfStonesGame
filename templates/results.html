@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Search Results after search</title>
+    <title>Search Results</title>
 </head>
 <body>
     <h1>Search Results</h1>
     {% if results %}
-        <ul>
-            {% for result in results %}
-                <li>Match found in Document {{ result.document_id }}, Position {{ result.position }}</li>
+        {% for result in results %}
+            <h2>Match found in Document {{ result.document_id }}</h2>
+            {% for position in result.positions %}
+                <p>Position: {{ position }}</p>
             {% endfor %}
-        </ul>
+            <h3>Paragraphs:</h3>
+            {% for paragraph in result.paragraphs %}
+                <p>{{ paragraph }}</p>
+            {% endfor %}
+        {% endfor %}
     {% else %}
-        <p>No matching results found.</p>
+        <p>No results found.</p>
     {% endif %}
 </body>
 </html>
