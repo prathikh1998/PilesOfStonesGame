@@ -14,6 +14,8 @@ app = Flask(__name__)
 
 # Declare the global variable for the index
 index = {}
+preprocessed_documents = []  # Add a global variable for preprocessed documents
+
 
 # Function to preprocess a single document
 def preprocess_document(document):
@@ -39,6 +41,7 @@ def preprocess_document(document):
 
     return tokens
 
+
 # Function to preprocess all the documents in a directory
 def preprocess_documents_from_blob_storage(connection_string, container_name):
     preprocessed_docs = []
@@ -61,22 +64,47 @@ def preprocess_documents_from_blob_storage(connection_string, container_name):
 
     return preprocessed_docs
 
+
 def build_index(preprocessed_docs):
     index = {}
     for doc_id, doc in enumerate(preprocessed_docs):
         for position, word in enumerate(doc):
             if word in index:
-                index[word].append((doc_id, position))
+                index[word].append((doc_id, [position]))  # Store positions as a list
             else:
-                index[word] = [(doc_id, position)]
+                index[word] = [(doc_id, [position])]
     return index
+
+
+
+def get_paragraphs(document_id, positions):
+    # Implement this function to extract the relevant paragraphs from the document
+    # based on the start and end positions
+    # You can load the document content using the document_id and extract the paragraphs accordingly
+    # Return a list of paragraphs
+
+    # Example implementation (replace with your own logic):
+    paragraphs = []
+    document_content = preprocessed_documents[document_id]
+    if isinstance(positions, int):  # Handle the case when positions is an integer
+        positions = [positions]
+    for position in positions:
+        start = max(position - 25, 0)
+        end = min(position + 26, len(document_content))
+        paragraph = ' '.join(document_content[start:end])
+        paragraphs.append(paragraph)
+
+    return paragraphs
+
+
+
 
 # Route for the home page
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# Route for handling search requests
+
 # Route for handling search requests
 # Route for handling search requests
 @app.route('/search', methods=['POST'])
@@ -88,10 +116,11 @@ def search():
     if search_word in index:
         matching_documents = index[search_word]
         results = []
-        for doc_id, position in matching_documents:
+        for doc_id, positions in matching_documents:
             result = {
                 'document_id': doc_id,
-                'position': position,
+                'positions': positions,
+                'paragraphs': get_paragraphs(doc_id, positions),  # Add the 'paragraphs' key
                 'tokens': preprocessed_documents[doc_id]  # Add the 'tokens' key
             }
             results.append(result)
@@ -113,14 +142,13 @@ if __name__ == '__main__':
     # Attempt to list the containers in the storage account
     containers = blob_service_client.list_containers()
 
-# If the containers are listed successfully, it means the storage account is accessible
+    # If the containers are listed successfully, it means the storage account is accessible
     print("Storage account is accessible. Containers:")
     for container in containers:
         print(container.name)
-    
+
     # Preprocess the documents from Azure Blob Storage
     preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
-
 
     # Build the index
     index = build_index(preprocessed_documents)
