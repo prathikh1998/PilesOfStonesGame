@@ -137,6 +137,8 @@ def search():
     proximity = 2  # Set the proximity value as desired
 
     search_words = search_query.lower().split()
+    print("the search words are")
+    print(searc_words)
 
     matching_documents = search_combinations(index, search_words, proximity)
 
