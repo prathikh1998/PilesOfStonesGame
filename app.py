@@ -12,9 +12,8 @@ nltk.download('stopwords')
 # Create a Flask application instance
 app = Flask(__name__)
 
-# Declare the global variables
+# Declare the global variable for the index
 index = {}
-preprocessed_documents = []
 
 # Function to preprocess a single document
 def preprocess_document(document):
@@ -40,23 +39,25 @@ def preprocess_document(document):
 
     return tokens
 
-# Function to preprocess all the documents in Azure Storage
-def preprocess_documents_from_azure_storage(container_name):
+# Function to preprocess all the documents in a directory
+def preprocess_documents_from_blob_storage(connection_string, container_name):
     preprocessed_docs = []
 
-    # Connect to the Azure Storage account
-    connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
+    # Create a BlobServiceClient object
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+    # Get a reference to the container
     container_client = blob_service_client.get_container_client(container_name)
 
-    # Iterate over the blobs in the container
-    for blob in container_client.list_blobs():
-        if blob.name.endswith('.txt'):
-            print(f"Processing blob: {blob.name}")
-            blob_client = container_client.get_blob_client(blob.name)
-            document_content = blob_client.download_blob().readall().decode('utf-8')
-            tokens = preprocess_document(document_content)
-            preprocessed_docs.append(tokens)
+    # List all the blobs in the container
+    blobs = container_client.list_blobs()
+
+    # Iterate over the blobs and preprocess the documents
+    for blob in blobs:
+        blob_client = container_client.get_blob_client(blob.name)
+        document_content = blob_client.download_blob().readall().decode("utf-8")
+        tokens = preprocess_document(document_content)
+        preprocessed_docs.append(tokens)
 
     return preprocessed_docs
 
@@ -76,9 +77,11 @@ def home():
     return render_template('index.html')
 
 # Route for handling search requests
+# Route for handling search requests
+# Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
-    global index, preprocessed_documents  # Declare the index and preprocessed_documents as global
+    global index  # Declare the index variable as global
 
     search_word = request.form['query']
 
@@ -95,20 +98,33 @@ def search():
     else:
         results = []
 
-    # Preprocess the documents from Azure Storage
+    return render_template('results.html', results=results)
+
+
+
+# Run the Flask application
+if __name__ == '__main__':
+    # Azure Blob Storage connection string and container name
+    connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
     container_name = "sampl1"
-    preprocessed_documents = preprocess_documents_from_azure_storage(container_name)
+
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+    # Attempt to list the containers in the storage account
+    containers = blob_service_client.list_containers()
+
+# If the containers are listed successfully, it means the storage account is accessible
+    print("Storage account is accessible. Containers:")
+    for container in containers:
+        print(container.name)
+    
+    # Preprocess the documents from Azure Blob Storage
+    preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
+
 
     # Build the index
     index = build_index(preprocessed_documents)
 
-    # Preprocess all documents and get all tokens
-    all_tokens = [token for doc_tokens in preprocessed_documents for token in doc_tokens]
-
-    return render_template('results.html', results=results, all_tokens=all_tokens)
-
-# Run the Flask application
-if __name__ == '__main__':
     app.config['PROPAGATE_EXCEPTIONS'] = True
     app.config['DEBUG'] = True
 
