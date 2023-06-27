@@ -140,7 +140,10 @@ def search():
     print("the search words are")
     print(search_words)
 
-    matching_documents = search_combinations(index, search_words, proximity)
+    if index is not None and hasattr(index, '__iter__'):
+        matching_documents = search_combinations(index, search_words, proximity)
+    else:
+        matching_documents = []
 
     results = []
     for doc_id, position in matching_documents:
