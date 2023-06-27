@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Search Results</title>
+    <title>Search Results after search</title>
 </head>
 <body>
     <h1>Search Results</h1>
@@ -14,12 +14,5 @@
     {% else %}
         <p>No matching results found.</p>
     {% endif %}
-
-    <h2>All Tokens</h2>
-    <ul>
-        {% for token in all_tokens %}
-            <li>{{ token }}</li>
-        {% endfor %}
-    </ul>
 </body>
 </html>
