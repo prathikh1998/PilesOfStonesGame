@@ -137,8 +137,7 @@ def search():
     proximity = 2  # Set the proximity value as desired
 
     search_words = search_query.lower().split()
-    print("the search words are")
-    print(search_words)
+    print("The search words are:", search_words)
 
     if index is not None and hasattr(index, '__iter__'):
         matching_documents = search_combinations(index, search_words, proximity)
@@ -166,8 +165,10 @@ if __name__ == '__main__':
 
     # Preprocess the documents from Azure Blob Storage
     preprocessed_documents, file_names = preprocess_documents_from_blob_storage(connection_string, container_name)
+    print("The preprocessed documents are:", preprocessed_documents)
 
     # Build the index
     index = build_index(preprocessed_documents)
+    print("The index is:", index)
 
     app.run()
