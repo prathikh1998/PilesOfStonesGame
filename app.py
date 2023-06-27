@@ -139,10 +139,6 @@ def search():
     search_words = search_query.lower().split()
     print("The search words are:", search_words)
 
-    print("The preprocessed documents are:", preprocessed_documents)
-
-    print("The index is:", index)
-
     if index is not None and hasattr(index, '__iter__'):
         matching_documents = search_combinations(index, search_words, proximity)
     else:
