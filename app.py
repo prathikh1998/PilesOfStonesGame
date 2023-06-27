@@ -138,7 +138,7 @@ def search():
 
     search_words = search_query.lower().split()
     print("the search words are")
-    print(searc_words)
+    print(search_words)
 
     matching_documents = search_combinations(index, search_words, proximity)
 
