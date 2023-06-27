@@ -142,7 +142,7 @@ def search():
     # Check if the index and preprocessed documents are already available
     if index is None or preprocessed_documents is None:
         # Preprocess the documents from Azure Blob Storage
-        preprocessed_documents, file_names = preprocess_documents_from_blob_storage(connection_string, container_name)
+        preprocessed_documents, file_names = preprocess_documents_from_blob_storage(app.config['CONNECTION_STRING'], app.config['CONTAINER_NAME'])
         print("The preprocessed documents are:", preprocessed_documents)
 
         # Build the index
@@ -168,7 +168,7 @@ def search():
 # Run the Flask application
 if __name__ == '__main__':
     # Azure Blob Storage connection string and container name
-    connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
-    container_name = "sampl1"
+    app.config['CONNECTION_STRING'] = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
+    app.config['CONTAINER_NAME'] = "sampl1"
 
     app.run()
