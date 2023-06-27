@@ -166,9 +166,13 @@ def search():
 
 
 # Run the Flask application
+# Run the Flask application
 if __name__ == '__main__':
     # Azure Blob Storage connection string and container name
     app.config['CONNECTION_STRING'] = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
     app.config['CONTAINER_NAME'] = "sampl1"
+
+    preprocessed_documents, file_names = preprocess_documents_from_blob_storage(app.config['CONNECTION_STRING'], app.config['CONTAINER_NAME'])
+    index = build_index(preprocessed_documents)
 
     app.run()
