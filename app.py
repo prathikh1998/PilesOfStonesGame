@@ -2,7 +2,6 @@ import os
 import re
 import string
 import nltk
-nltk.download('stopwords')
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
@@ -78,7 +77,7 @@ def build_index(preprocessed_docs):
 # Function to search for combinations of words in close proximity
 def search_combinations(index, search_words, proximity):
     matching_documents = []
-    if all(word in index for word in search_words if word is not None):
+    if all(word in index for word in search_words):
         positions = [index[word] for word in search_words]
         for doc_id, positions_1 in positions[0]:
             if isinstance(positions_1, int):  # Handle case where positions_1 is an integer
@@ -138,19 +137,7 @@ def search():
     proximity = 2  # Set the proximity value as desired
 
     search_words = search_query.lower().split()
-    print("The search words are:", search_words)
 
-    # Check if the index and preprocessed documents are already available
-    if index is None or preprocessed_documents is None:
-        # Preprocess the documents from Azure Blob Storage
-        preprocessed_documents, file_names = preprocess_documents_from_blob_storage(app.config['CONNECTION_STRING'], app.config['CONTAINER_NAME'])
-        print("The preprocessed documents are:", preprocessed_documents)
-
-        # Build the index
-        index = build_index(preprocessed_documents)
-        print("The index is:", index)
-
-    # Search for matching documents
     matching_documents = search_combinations(index, search_words, proximity)
 
     results = []
@@ -167,13 +154,15 @@ def search():
 
 
 # Run the Flask application
-# Run the Flask application
 if __name__ == '__main__':
     # Azure Blob Storage connection string and container name
-    app.config['CONNECTION_STRING'] = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
-    app.config['CONTAINER_NAME'] = "sampl1"
+    connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
+    container_name = "sampl1"
 
-    preprocessed_documents, file_names = preprocess_documents_from_blob_storage(app.config['CONNECTION_STRING'], app.config['CONTAINER_NAME'])
+    # Preprocess the documents from Azure Blob Storage
+    preprocessed_documents, file_names = preprocess_documents_from_blob_storage(connection_string, container_name)
+
+    # Build the index
     index = build_index(preprocessed_documents)
 
     app.run()
