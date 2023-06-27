@@ -139,10 +139,18 @@ def search():
     search_words = search_query.lower().split()
     print("The search words are:", search_words)
 
-    if index is not None and hasattr(index, '__iter__'):
-        matching_documents = search_combinations(index, search_words, proximity)
-    else:
-        matching_documents = []
+    # Check if the index and preprocessed documents are already available
+    if index is None or preprocessed_documents is None:
+        # Preprocess the documents from Azure Blob Storage
+        preprocessed_documents, file_names = preprocess_documents_from_blob_storage(connection_string, container_name)
+        print("The preprocessed documents are:", preprocessed_documents)
+
+        # Build the index
+        index = build_index(preprocessed_documents)
+        print("The index is:", index)
+
+    # Search for matching documents
+    matching_documents = search_combinations(index, search_words, proximity)
 
     results = []
     for doc_id, position in matching_documents:
@@ -162,13 +170,5 @@ if __name__ == '__main__':
     # Azure Blob Storage connection string and container name
     connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
     container_name = "sampl1"
-
-    # Preprocess the documents from Azure Blob Storage
-    preprocessed_documents, file_names = preprocess_documents_from_blob_storage(connection_string, container_name)
-    print("The preprocessed documents are:", preprocessed_documents)
-
-    # Build the index
-    index = build_index(preprocessed_documents)
-    print("The index is:", index)
 
     app.run()
