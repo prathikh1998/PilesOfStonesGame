@@ -7,9 +7,9 @@
     <h1>Search Results</h1>
     {% if results %}
         {% for result in results %}
-            <h2>Match found in Document {{ result.document_id }}</h2>
+            <h2>Match found in Document {{ result.file_name }}</h2>  <!-- Display the file_name -->
             {% for position in result.positions %}
-                <p>Position: {{ position }}</p>
+                <p>Position: {{ position[1] }}</p>  <!-- Access the position using position[1] -->
             {% endfor %}
             <h3>Paragraphs:</h3>
             {% for paragraph in result.paragraphs %}
