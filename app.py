@@ -7,15 +7,13 @@ from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
 from azure.storage.blob import BlobServiceClient
 
-nltk.download('stopwords')
-
 # Create a Flask application instance
 app = Flask(__name__)
 
-# Declare the global variable for the index
-index = {}
-preprocessed_documents = []  # Add a global variable for preprocessed documents
-
+# Global variables for storing the index and preprocessed documents
+index = None
+preprocessed_documents = None
+file_names = None  # Variable to store file names
 
 # Function to preprocess a single document
 def preprocess_document(document):
@@ -41,13 +39,13 @@ def preprocess_document(document):
 
     return tokens
 
-
-# Function to preprocess all the documents in a directory
+# Function to preprocess documents from Azure Blob Storage
 def preprocess_documents_from_blob_storage(connection_string, container_name):
-    preprocessed_docs = []
-
     # Create a BlobServiceClient object
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+    preprocessed_docs = []
+    file_names = []  # List to store file names
 
     # Get a reference to the container
     container_client = blob_service_client.get_container_client(container_name)
@@ -61,22 +59,51 @@ def preprocess_documents_from_blob_storage(connection_string, container_name):
         document_content = blob_client.download_blob().readall().decode("utf-8")
         tokens = preprocess_document(document_content)
         preprocessed_docs.append(tokens)
+        file_names.append(blob.name)  # Store the file name
 
-    return preprocessed_docs
+    return preprocessed_docs, file_names
 
-
+# Function to build the index
 def build_index(preprocessed_docs):
     index = {}
     for doc_id, doc in enumerate(preprocessed_docs):
         for position, word in enumerate(doc):
             if word in index:
-                index[word].append((doc_id, [position]))  # Store positions as a list
+                index[word].append((doc_id, position))
             else:
-                index[word] = [(doc_id, [position])]
+                index[word] = [(doc_id, position)]
     return index
 
+# Function to search for combinations of words in close proximity
+def search_combinations(index, search_words, proximity):
+    matching_documents = []
+    if all(word in index for word in search_words):
+        positions = [index[word] for word in search_words]
+        for doc_id, positions_1 in positions[0]:
+            if isinstance(positions_1, int):  # Handle case where positions_1 is an integer
+                positions_1 = [positions_1]
+            for position_1 in positions_1:
+                found = True
+                for i in range(1, len(positions)):
+                    found_match = False
+                    for doc_id_2, positions_2 in positions[i]:
+                        if isinstance(positions_2, int):  # Handle case where positions_2 is an integer
+                            positions_2 = [positions_2]
+                        for position_2 in positions_2:
+                            if abs(position_2 - position_1) <= proximity:
+                                found_match = True
+                                break
+                        if found_match:
+                            break
+                    if not found_match:
+                        found = False
+                        break
+                if found:
+                    matching_documents.append((doc_id, position_1))
 
+    return matching_documents
 
+# Function to get the paragraphs from a document based on positions
 def get_paragraphs(document_id, positions):
     # Implement this function to extract the relevant paragraphs from the document
     # based on the start and end positions
@@ -96,39 +123,34 @@ def get_paragraphs(document_id, positions):
 
     return paragraphs
 
-
-
-
 # Route for the home page
 @app.route('/')
 def home():
     return render_template('index.html')
 
-
-# Route for handling search requests
 # Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
-    global index  # Declare the index variable as global
+    global index, preprocessed_documents, file_names
 
-    search_word = request.form['query']
+    search_query = request.form['query']
+    proximity = 2  # Set the proximity value as desired
 
-    if search_word in index:
-        matching_documents = index[search_word]
-        results = []
-        for doc_id, positions in matching_documents:
-            result = {
-                'document_id': doc_id,
-                'positions': positions,
-                'paragraphs': get_paragraphs(doc_id, positions),  # Add the 'paragraphs' key
-                'tokens': preprocessed_documents[doc_id]  # Add the 'tokens' key
-            }
-            results.append(result)
-    else:
-        results = []
+    search_words = search_query.lower().split()
+
+    matching_documents = search_combinations(index, search_words, proximity)
+
+    results = []
+    for doc_id, position in matching_documents:
+        result = {
+            'file_name': file_names[doc_id],  # Include the file name instead of the doc_id
+            'positions': [(doc_id, position)],  # Include both document ID and position
+            'paragraphs': get_paragraphs(doc_id, position),
+            'tokens': preprocessed_documents[doc_id]
+        }
+        results.append(result)
 
     return render_template('results.html', results=results)
-
 
 
 # Run the Flask application
@@ -137,23 +159,10 @@ if __name__ == '__main__':
     connection_string = "DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net"
     container_name = "sampl1"
 
-    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-
-    # Attempt to list the containers in the storage account
-    containers = blob_service_client.list_containers()
-
-    # If the containers are listed successfully, it means the storage account is accessible
-    print("Storage account is accessible. Containers:")
-    for container in containers:
-        print(container.name)
-
     # Preprocess the documents from Azure Blob Storage
-    preprocessed_documents = preprocess_documents_from_blob_storage(connection_string, container_name)
+    preprocessed_documents, file_names = preprocess_documents_from_blob_storage(connection_string, container_name)
 
     # Build the index
     index = build_index(preprocessed_documents)
-
-    app.config['PROPAGATE_EXCEPTIONS'] = True
-    app.config['DEBUG'] = True
 
     app.run()
