@@ -6,7 +6,6 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
 from azure.storage.blob import BlobServiceClient
-nltk.download('stopwords')
 
 # Create a Flask application instance
 app = Flask(__name__)
@@ -137,8 +136,10 @@ def search():
     search_query = request.form['query']
     proximity = 2  # Set the proximity value as desired
 
-    search_words = search_query.lower().split()
+    # Preprocess the search query
+    search_words = preprocess_document(search_query)
 
+    # Search for combinations
     matching_documents = search_combinations(index, search_words, proximity)
 
     results = []
@@ -151,8 +152,7 @@ def search():
         }
         results.append(result)
 
-    return render_template('results.html', results=results)
-
+    return render_template('results.html', results=results, tokens=preprocessed_documents, index=index)
 
 # Run the Flask application
 if __name__ == '__main__':
