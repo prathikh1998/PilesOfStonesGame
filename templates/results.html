@@ -7,29 +7,14 @@
     <h1>Search Results</h1>
     {% if results %}
         {% for result in results %}
-            <h2>Match found in Document {{ result.file_name }}</h2>
+            <h2>Match found in Document {{ result.file_name }}</h2>  <!-- Display the file_name -->
             {% for position in result.positions %}
-                <p>Position: {{ position[1] }}</p>
+                <p>Position: {{ position[1] }}</p>  <!-- Access the position using position[1] -->
             {% endfor %}
             <h3>Paragraphs:</h3>
             {% for paragraph in result.paragraphs %}
                 <p>{{ paragraph }}</p>
             {% endfor %}
-            <h3>Tokens:</h3>
-            <p>{{ tokens[result.file_name] }}</p>  <!-- Display the tokens for the current document -->
-            <h3>Index:</h3>
-            <ul>
-                {% for term, positions in index.items() %}
-                    <li>
-                        Term: {{ term }}
-                        <ul>
-                            {% for position in positions %}
-                                <li>Document ID: {{ position[0] }}, Position: {{ position[1] }}</li>
-                            {% endfor %}
-                        </ul>
-                    </li>
-                {% endfor %}
-            </ul>
         {% endfor %}
     {% else %}
         <p>No results found.</p>
