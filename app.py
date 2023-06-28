@@ -2,7 +2,6 @@ import os
 import re
 import string
 import nltk
-nltk.download('stopwords')
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
@@ -62,8 +61,8 @@ def preprocess_documents_from_blob_storage(connection_string, container_name):
         preprocessed_docs.append(tokens)
         file_names.append(blob.name)  # Store the file name
 
-    print("PREPROCESSED DOCS",preprocessed_docs)
-    print("FILENAMES",file_names)
+    print(preprocessed_docs)
+    print(file_names)
 
     return preprocessed_docs, file_names
 
@@ -143,20 +142,27 @@ def search():
     # Preprocess the search query
     search_words = preprocess_document(search_query)
 
-    # Search for combinations
-    matching_documents = search_combinations(index, search_words, proximity)
-
     results = []
-    for doc_id, position in matching_documents:
-        result = {
-            'file_name': file_names[doc_id],  # Include the file name instead of the doc_id
-            'positions': [(doc_id, position)],  # Include both document ID and position
-            'paragraphs': get_paragraphs(doc_id, position),
-            'tokens': preprocessed_documents[doc_id]
-        }
-        results.append(result)
+    for combination in combinations(search_words):
+        # Build index for each combination
+        index = build_index(preprocessed_documents)
+        print("INDEX IS AFTERNSEARCH:")
+        print(index)
+
+        # Search for the current combination
+        matching_documents = search_combinations(index, combination, proximity)
+
+        for doc_id, position in matching_documents:
+            result = {
+                'file_name': file_names[doc_id],
+                'positions': [(doc_id, position)],
+                'paragraphs': get_paragraphs(doc_id, position),
+                'tokens': preprocessed_documents[doc_id]
+            }
+            results.append(result)
 
     return render_template('results.html', results=results, tokens=preprocessed_documents, index=index)
+
 
 # Run the Flask application
 if __name__ == '__main__':
