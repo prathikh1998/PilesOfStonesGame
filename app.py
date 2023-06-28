@@ -7,6 +7,8 @@ from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
 from azure.storage.blob import BlobServiceClient
 
+nltk.download('stopwords')
+
 # Create a Flask application instance
 app = Flask(__name__)
 
