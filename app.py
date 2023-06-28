@@ -143,7 +143,7 @@ def search():
     # Preprocess the search query
     search_words = preprocess_document(search_query)
 
-    preprocessed_documents, file_names = preprocess_documents_from_blob_storage(connection_string, container_name)
+     preprocessed_documents, file_names = preprocess_documents_from_blob_storage("DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net", "sampl1")
 
     # Build the index
     index = build_index(preprocessed_documents)
