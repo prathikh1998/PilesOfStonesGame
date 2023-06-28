@@ -7,8 +7,6 @@ from nltk.stem import PorterStemmer
 from flask import Flask, render_template, request
 from azure.storage.blob import BlobServiceClient
 
-nltk.download('stopwords')
-
 # Create a Flask application instance
 app = Flask(__name__)
 
@@ -62,6 +60,9 @@ def preprocess_documents_from_blob_storage(connection_string, container_name):
         tokens = preprocess_document(document_content)
         preprocessed_docs.append(tokens)
         file_names.append(blob.name)  # Store the file name
+
+    print("PREPROCESSED DOCS",preprocessed_docs)
+    print("FILENAMES",file_names)
 
     return preprocessed_docs, file_names
 
