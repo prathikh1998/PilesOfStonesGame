@@ -5,39 +5,45 @@ app = Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        l1 = int(request.form['l1'])
-        l2 = int(request.form['l2'])
-        iv = request.form['iv']
-        return render_template('password.html', l1=l1, l2=l2, iv=iv)
+        html_input = request.form['html_input']
+        mp_tags, modified_html = extract_mp_tags(html_input)
+        return render_template('results.html', mp_tags=mp_tags, modified_html=modified_html)
     return render_template('index.html')
 
-@app.route('/validate', methods=['POST'])
-def validate():
-    password = request.form['password']
-    l1 = int(request.form['l1'])
-    l2 = int(request.form['l2'])
-    iv = request.form['iv']
-    result = validate_password(password, l1, l2, iv)
-    return render_template('results.html', result=result)
+def extract_mp_tags(html_input):
+    mp_tags = ['<b>', '</b>', '<i>', '</i>', '<p>', '</p>', '<h1>', '</h1>']
+    modified_html = html_input
 
-def validate_password(password, l1, l2, iv):
-    # Your password validation logic here
-    # Return a dictionary with 'valid' and 'reason' keys
-    
-    # Example implementation
-    # You can replace this with your actual password validation logic
-    if len(password) < l1 or len(password) > l2:
-        return {'valid': False, 'reason': f"Password length should be between {l1} and {l2} characters."}
-    elif not any(char.isdigit() for char in password):
-        return {'valid': False, 'reason': 'Password must contain at least one digit.'}
-    elif len([char for char in password if char.isupper()]) < 2:
-        return {'valid': False, 'reason': 'Password must contain at least two uppercase letters.'}
-    elif not any(char in '#@+-%' for char in password):
-        return {'valid': False, 'reason': 'Password must contain at least one of the characters: #@+-%.'}
-    elif any(char in iv for char in password):
-        return {'valid': False, 'reason': 'Password cannot contain the characters from the invalid list.'}
-    else:
-        return {'valid': True, 'reason': None}
+    stack = []
+    mp_tags_occurrences = []
+
+    i = 0
+    while i < len(modified_html):
+        if modified_html[i:i+2] == '</':
+            closing_tag_end = modified_html.find('>', i+2)
+            closing_tag = modified_html[i:closing_tag_end+1]
+
+            if stack and stack[-1] == closing_tag[2:]:
+                opening_tag_start = modified_html.rfind('<', 0, i)
+                opening_tag = modified_html[opening_tag_start:i+1]
+
+                mp_tags_occurrences.append((opening_tag, closing_tag))
+                stack.pop()
+
+        elif modified_html[i] == '<':
+            opening_tag_end = modified_html.find('>', i+1)
+            opening_tag = modified_html[i:opening_tag_end+1]
+
+            if opening_tag in mp_tags:
+                stack.append(opening_tag)
+
+        i += 1
+
+    for opening_tag, closing_tag in mp_tags_occurrences:
+        modified_html = modified_html.replace(opening_tag, '')
+        modified_html = modified_html.replace(closing_tag, '')
+
+    return mp_tags_occurrences, modified_html
 
 if __name__ == '__main__':
     app.run()
