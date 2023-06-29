@@ -1,3 +1,5 @@
+#HERE BOTH ARE SAME app and app2
+
 import os
 import re
 import string
@@ -17,10 +19,6 @@ preprocessed_documents = None
 file_names = None  # Variable to store file names
 
 # Function to preprocess a single document
-# Function to preprocess a single document
-from azure.storage.blob import BlobServiceClient
-
-# Function to preprocess a single document
 def preprocess_document(document):
     # Remove non-ASCII characters
     document = document.encode("ascii", errors="ignore").decode()
@@ -34,10 +32,8 @@ def preprocess_document(document):
     # Split the text into individual words or tokens
     tokens = document.split()
 
-    # Download stop words file from Azure Blob Storage
-    stop_words = download_stop_words_from_azure("DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net", "sampl2", "stopwords.txt")
-
     # Remove stop words
+    stop_words = set(stopwords.words("english"))
     tokens = [token for token in tokens if token not in stop_words]
 
     # Word stemming (optional)
@@ -45,27 +41,6 @@ def preprocess_document(document):
     tokens = [stemmer.stem(token) for token in tokens]
 
     return tokens
-
-# Function to download stop words file from Azure Blob Storage
-def download_stop_words_from_azure(connection_string, container_name, file_name):
-    # Create a BlobServiceClient object
-    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-
-    # Get a reference to the container
-    container_client = blob_service_client.get_container_client(container_name)
-
-    # Get the blob client for the stop words file
-    blob_client = container_client.get_blob_client(file_name)
-
-    # Download the blob content
-    stop_words_content = blob_client.download_blob().readall().decode("utf-8")
-
-    # Split the stop words content into a list
-    stop_words = stop_words_content.split("\n")
-
-    return stop_words
-
-
 
 # Function to preprocess documents from Azure Blob Storage
 def preprocess_documents_from_blob_storage(connection_string, container_name):
@@ -134,6 +109,20 @@ def search_combinations(index, search_words, proximity):
 
     return matching_documents
 
+def find_n_most_frequent_words(preprocessed_docs, n):
+    word_counts = {}
+    for doc in preprocessed_docs:
+        for word in doc:
+            if word in word_counts:
+                word_counts[word] += 1
+            else:
+                word_counts[word] = 1
+
+    sorted_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)
+    most_frequent_words = [word for word, count in sorted_words[:n]]
+
+    return most_frequent_words
+
 # Function to get the paragraphs from a document based on positions
 def get_paragraphs(document_id, positions):
     # Implement this function to extract the relevant paragraphs from the document
@@ -165,6 +154,7 @@ def search():
     global index, preprocessed_documents, file_names
 
     search_query = request.form['query']
+    
     proximity = 2  # Set the proximity value as desired
 
     # Preprocess the search query
@@ -178,6 +168,13 @@ def search():
     # Search for combinations
     matching_documents = search_combinations(index, search_words, proximity)
 
+    n = int(request.form['n'])
+
+    # Get the n most frequent words
+    most_frequent_words = find_n_most_frequent_words(preprocessed_documents, n)
+
+    # ...existing code...
+
     results = []
     for doc_id, position in matching_documents:
         result = {
@@ -188,7 +185,7 @@ def search():
         }
         results.append(result)
 
-    return render_template('results.html', results=results)
+    return render_template('results.html', results=results, most_frequent_words=most_frequent_words)
 
 # Run the Flask application
 if __name__ == '__main__':
