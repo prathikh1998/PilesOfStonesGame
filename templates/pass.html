@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Password Validity Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Admin Form (VF)</h2>
+        <form id="adminForm">
+            <div class="form-group">
+                <label for="minLength">Minimum Password Length:</label>
+                <input type="text" id="minLength" name="minLength" required>
+            </div>
+            <div class="form-group">
+                <label for="maxLength">Maximum Password Length:</label>
+                <input type="text" id="maxLength" name="maxLength" required>
+            </div>
+            <div class="form-group">
+                <label for="invalidChars">Invalid Characters (if any):</label>
+                <input type="text" id="invalidChars" name="invalidChars">
+            </div>
+            <input type="submit" value="Submit">
+        </form>
+
+        <h2>User Form (CP)</h2>
+        <form id="userForm">
+            <div class="form-group">
+                <label for="password">Enter Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <input type="submit" value="Check Validity">
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        document.getElementById("adminForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            var minLength = parseInt(document.getElementById("minLength").value);
+            var maxLength = parseInt(document.getElementById("maxLength").value);
+            var invalidChars = document.getElementById("invalidChars").value;
+
+            // You can perform additional validation if needed
+
+            // Save the values or perform any other desired actions
+
+            alert("Admin form submitted successfully!");
+        });
+
+        document.getElementById("userForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            var password = document.getElementById("password").value;
+
+            // You can perform additional validation if needed
+
+            // Send the password to the server for validation
+            // You can use AJAX or fetch to send the data to the server-side script
+
+            // For demonstration purposes, we'll check the password validity locally
+            var minPasswordLength = parseInt(document.getElementById("minLength").value);
+            var maxPasswordLength = parseInt(document.getElementById("maxLength").value);
+            var invalidPasswordChars = document.getElementById("invalidChars").value;
+
+            var result = checkPasswordValidity(password, minPasswordLength, maxPasswordLength, invalidPasswordChars);
+
+            // Display the result
+            document.getElementById("result").innerHTML = result;
+        });
+
+        function checkPasswordValidity(password, minPasswordLength, maxPasswordLength, invalidPasswordChars) {
+            // Implement the password validity checks here
+            // You can modify this function to match your requirements
+
+            // Check password length
+            if (password.length < minPasswordLength || password.length > maxPasswordLength) {
+                return "NotValid: Password length should be between " + minPasswordLength + " and " + maxPasswordLength + " characters.";
+            }
+
+            // Check for at least one number
+            if (!/\d/.test(password)) {
+                return "NotValid: Password must contain at least one number.";
+            }
+
+            // Check for at least two uppercase letters
+            if ((password.match(/[A-Z]/g) || []).length < 2) {
+                return "NotValid: Password must contain at least two uppercase letters.";
+            }
+
+            // Check for invalid characters
+            if (new RegExp(invalidPasswordChars).test(password)) {
+                return "NotValid: Password contains invalid characters.";
+            }
+
+            // Password is valid
+            return "Valid";
+        }
+    </script>
+</body>
+</html>
