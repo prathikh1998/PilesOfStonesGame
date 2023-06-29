@@ -20,8 +20,8 @@
         <!-- Display the most frequent words -->
         <h3>Most Frequent Words:</h3>
         <ul>
-          {% for word in most_frequent_words %}
-            <li>{{ word }}</li>
+          {% for word, frequency in most_frequent_words %}
+            <li>{{ word }} (Frequency: {{ frequency }})</li>
           {% endfor %}
         </ul>
     {% else %}

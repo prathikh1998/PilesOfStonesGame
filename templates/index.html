@@ -30,7 +30,7 @@
             color: #555;
         }
 
-        input[type="number"] {
+        input[type="text"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
@@ -67,7 +67,17 @@
         <br><br>
         <label for="n">Enter the number of most frequent words:</label>
         <input type="text" name="n" placeholder="Enter the value of n">
+        <br><br>
         <button type="submit">Search</button>
+    </form>
+    <br>
+    <form action="/replace_and_print" method="POST">
+        <br><br>
+        <input type="text" name="character" placeholder="Enter the character to be replaced">
+        <br><br>
+        <input type="text" name="replacement" placeholder="Enter the replacement character">
+        <br><br>
+        <button type="submit" name="action" value="replace_and_print">Replace and Print</button>
     </form>
 </body>
 </html>
