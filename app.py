@@ -1,4 +1,5 @@
 #HERE BOTH ARE SAME app and app2
+#HERE THE FREQUENCY AND THE MATCHING DOCS ARE PRINTED and also character replacement is done
 
 import os
 import re
@@ -24,7 +25,7 @@ def preprocess_document(document):
     document = document.encode("ascii", errors="ignore").decode()
 
     # Convert the text to lowercase
-    document = document.lower()
+    #document = document.lower()
 
     # Remove punctuation marks
     document = document.translate(str.maketrans("", "", string.punctuation))
@@ -37,8 +38,8 @@ def preprocess_document(document):
     tokens = [token for token in tokens if token not in stop_words]
 
     # Word stemming (optional)
-    stemmer = PorterStemmer()
-    tokens = [stemmer.stem(token) for token in tokens]
+    #stemmer = PorterStemmer()
+    #tokens = [stemmer.stem(token) for token in tokens]
 
     return tokens
 
@@ -109,19 +110,12 @@ def search_combinations(index, search_words, proximity):
 
     return matching_documents
 
-def find_n_most_frequent_words(preprocessed_docs, n):
-    word_counts = {}
-    for doc in preprocessed_docs:
-        for word in doc:
-            if word in word_counts:
-                word_counts[word] += 1
-            else:
-                word_counts[word] = 1
-
-    sorted_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)
-    most_frequent_words = [word for word, count in sorted_words[:n]]
-
-    return most_frequent_words
+def find_most_frequent_words(index, n):
+    word_frequencies = {}
+    for word, positions in index.items():
+        word_frequencies[word] = len(positions)
+    sorted_words = sorted(word_frequencies.items(), key=lambda x: x[1], reverse=True)
+    return sorted_words[:n]
 
 # Function to get the paragraphs from a document based on positions
 def get_paragraphs(document_id, positions):
@@ -149,6 +143,7 @@ def home():
     return render_template('index.html')
 
 # Route for handling search requests
+# Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
     global index, preprocessed_documents, file_names
@@ -171,9 +166,7 @@ def search():
     n = int(request.form['n'])
 
     # Get the n most frequent words
-    most_frequent_words = find_n_most_frequent_words(preprocessed_documents, n)
-
-    # ...existing code...
+    most_frequent_words = find_most_frequent_words(index, n)  # Fix the function name
 
     results = []
     for doc_id, position in matching_documents:
@@ -186,6 +179,39 @@ def search():
         results.append(result)
 
     return render_template('results.html', results=results, most_frequent_words=most_frequent_words)
+
+
+
+# Route for replacing a character and displaying the first 8 lines
+@app.route('/replace_and_print', methods=['POST'])
+def replace_and_print():
+    global preprocessed_documents, file_names
+
+    character = request.form['character']
+    replacement = request.form['replacement']
+
+    # Preprocess the documents if not already done
+    if preprocessed_documents is None:
+        preprocessed_documents, file_names = preprocess_documents_from_blob_storage("DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net", "sampl1")
+
+    # Replace the character in each document
+    for i, document in enumerate(preprocessed_documents):
+        modified_lines = []
+        for line in document:
+            modified_line = line.replace(character, replacement)
+            modified_lines.append(modified_line)
+        preprocessed_documents[i] = modified_lines
+
+    # Get the first 8 lines of each modified document
+    modified_documents = []
+    for document in preprocessed_documents:
+        lines = document[:8]
+        modified_documents.append('\n'.join(lines))
+
+    return render_template('replace.html', documents=modified_documents)
+
+
+
 
 # Run the Flask application
 if __name__ == '__main__':
