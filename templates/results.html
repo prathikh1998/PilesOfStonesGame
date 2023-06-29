@@ -5,28 +5,32 @@
 </head>
 <body>
     <h1>Search Results</h1>
-    {% if results %}
-        {% for result in results %}
-            <h2>Match found in Document {{ result.file_name }}</h2>
-            {% for position in result.positions %}
-                <p>Position: {{ position[1] }}</p>
-            {% endfor %}
-            <h3>Paragraphs:</h3>
-            {% for paragraph in result.paragraphs %}
-                <p>File: {{ result.file_name }}</p>
-                <p>{{ paragraph }}</p>
-            {% endfor %}
+
+    {% for result in results %}
+    <div class="result">
+        <h2>{{ result.file_name }}</h2>
+        <p>Matching positions: {{ result.positions }}</p>
+        <h3>Paragraphs:</h3>
+        {% for paragraph in result.paragraphs %}
+            <p>{{ paragraph }}</p>
         {% endfor %}
-        
-        <!-- Display the most frequent words -->
-        <h3>Most Frequent Words:</h3>
-        <ul>
-          {% for word, frequency in most_frequent_words %}
-            <li>{{ word }} (Frequency: {{ frequency }})</li>
-          {% endfor %}
-        </ul>
-    {% else %}
-        <p>No results found.</p>
-    {% endif %}
+        <h3>Tokens:</h3>
+        <p>{{ result.tokens }}</p>
+    </div>
+    {% endfor %}
+
+    <h2>Most Frequent Words:</h2>
+    <ul>
+        {% for word, frequency in most_frequent_words %}
+            <li>{{ word }} ({{ frequency }})</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Most Frequent Two-Letter Combinations:</h2>
+    <ul>
+        {% for combination, frequency in most_frequent_combinations %}
+            <li>{{ combination }} ({{ frequency }})</li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
