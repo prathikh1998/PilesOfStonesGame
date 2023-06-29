@@ -1,15 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Password Validation</title>
+    <title>HTML Tag Pairs Extraction Result</title>
+    <style>
+        .mp-tag {
+            background-color: yellow;
+        }
+    </style>
 </head>
 <body>
-    <h1>Password Validation Result</h1>
-    {% if result.valid %}
-        <p>Password is valid!</p>
+    <h1>HTML Tag Pairs Extraction Result</h1>
+    <h2>Parts of the HTML within MP tag pairs:</h2>
+    {% if mp_tags %}
+        {% for opening_tag, closing_tag in mp_tags %}
+            <div class="mp-tag">
+                <p>Opening tag: {{ opening_tag }}</p>
+                <p>Closing tag: {{ closing_tag }}</p>
+            </div>
+        {% endfor %}
     {% else %}
-        <p>Password is not valid.</p>
-        <p>Reason: {{ result.reason }}</p>
+        <p>No MP tag pairs found.</p>
     {% endif %}
+    <hr>
+    <h2>Modified HTML without MP tags:</h2>
+    <div>{{ modified_html|safe }}</div>
 </body>
 </html>
