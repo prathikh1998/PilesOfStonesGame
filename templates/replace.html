@@ -30,9 +30,21 @@
 </head>
 <body>
     <h1>Modified Documents</h1>
-    {% for document in documents %}
+    {% for modified_document, original_lines, file_name in modified_documents %}
         <div class="document">
-            <pre>{{ document }}</pre>
+            <h2>{{ file_name }}</h2>
+            <h3>Modified Lines:</h3>
+            <pre>
+                {% for line in modified_document %}
+                    {{ line }}
+                {% endfor %}
+            </pre>
+            <h3>Original Lines:</h3>
+            <pre>
+                {% for line in original_lines %}
+                    {{ line }}
+                {% endfor %}
+            </pre>
         </div>
     {% endfor %}
 </body>
