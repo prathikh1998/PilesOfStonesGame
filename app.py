@@ -185,30 +185,19 @@ def search():
 # Route for replacing a character and displaying the first 8 lines
 @app.route('/replace_and_print', methods=['POST'])
 def replace_and_print():
-    global preprocessed_documents, file_names
-
+    documents = request.form.getlist('documents')
     character = request.form['character']
     replacement = request.form['replacement']
 
-    # Preprocess the documents if not already done
-    if preprocessed_documents is None:
-        preprocessed_documents, file_names = preprocess_documents_from_blob_storage("DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net", "sampl1")
-
-    # Replace the character in each document
-    for i, document in enumerate(preprocessed_documents):
-        modified_lines = []
-        for line in document:
-            modified_line = line.replace(character, replacement)
-            modified_lines.append(modified_line)
-        preprocessed_documents[i] = modified_lines
-
-    # Get the first 8 lines of each modified document
     modified_documents = []
-    for document in preprocessed_documents:
-        lines = document[:8]
-        modified_documents.append('\n'.join(lines))
+    for document in documents:
+        modified_document = document.replace(character, replacement)
+        modified_documents.append(modified_document)
 
-    return render_template('replace.html', documents=modified_documents)
+    file_names = request.form.getlist('file_names')  # Retrieve the file names
+
+    return render_template('replace.html', documents=modified_documents, file_names=file_names)
+
 
 
 
