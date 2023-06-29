@@ -117,25 +117,26 @@ def find_most_frequent_words(index, n):
     sorted_words = sorted(word_frequencies.items(), key=lambda x: x[1], reverse=True)
     return sorted_words[:n]
 
-# Function to get the paragraphs from a document based on positions
-def get_paragraphs(document_id, positions):
-    # Implement this function to extract the relevant paragraphs from the document
-    # based on the start and end positions
-    # You can load the document content using the document_id and extract the paragraphs accordingly
-    # Return a list of paragraphs
+def get_paragraphs_from_blob_storage(file_name, word):
+    # Connect to your Azure storage account
+    connection_string = 'DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net'
+    container_name = 'sampl1'
 
-    # Example implementation (replace with your own logic):
-    paragraphs = []
-    document_content = preprocessed_documents[document_id]
-    if isinstance(positions, int):  # Handle the case when positions is an integer
-        positions = [positions]
-    for position in positions:
-        start = max(position - 25, 0)
-        end = min(position + 26, len(document_content))
-        paragraph = ' '.join(document_content[start:end])
-        paragraphs.append(paragraph)
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(container_name)
 
-    return paragraphs
+    blob_client = container_client.get_blob_client(file_name)
+    file_content = blob_client.download_blob().readall().decode('utf-8')
+    paragraphs = file_content.split('\n\n')
+
+    matching_paragraphs = []
+    for paragraph in paragraphs:
+        if word in paragraph:
+            matching_paragraphs.append(paragraph)
+
+    return matching_paragraphs
+
+
 
 # Route for the home page
 @app.route('/')
@@ -143,13 +144,12 @@ def home():
     return render_template('index.html')
 
 # Route for handling search requests
-# Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
     global index, preprocessed_documents, file_names
 
     search_query = request.form['query']
-    
+
     proximity = 2  # Set the proximity value as desired
 
     # Preprocess the search query
@@ -171,14 +171,18 @@ def search():
     results = []
     for doc_id, position in matching_documents:
         result = {
-            'file_name': file_names[doc_id],  # Include the file name instead of the doc_id
-            'positions': [(doc_id, position)],  # Include both document ID and position
-            'paragraphs': get_paragraphs(doc_id, position),
+            'file_name': file_names[doc_id],
+            'positions': [(doc_id, position)],
+            'paragraphs': get_paragraphs_from_blob_storage(file_names[doc_id], search_query),
             'tokens': preprocessed_documents[doc_id]
         }
         results.append(result)
 
+
     return render_template('results.html', results=results, most_frequent_words=most_frequent_words)
+
+
+
 
 @app.route('/search_lines', methods=['POST'])
 def search_lines():
