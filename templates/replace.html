@@ -16,21 +16,24 @@
         }
 
         .document {
-            margin-bottom: 20px;
             background-color: #fff;
             padding: 20px;
+            margin-bottom: 20px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        pre {
+            white-space: pre-wrap;
         }
     </style>
 </head>
 <body>
     <h1>Modified Documents</h1>
     {% for document in documents %}
-    <div class="document">
-        <h2>{{ file_names[loop.index0] }}</h2>
-        <pre>{{ document }}</pre>
-    </div>
+        <div class="document">
+            <pre>{{ document }}</pre>
+        </div>
     {% endfor %}
 </body>
 </html>
