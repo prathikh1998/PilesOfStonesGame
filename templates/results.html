@@ -13,6 +13,7 @@
             {% endfor %}
             <h3>Paragraphs:</h3>
             {% for paragraph in result.paragraphs %}
+                <p>File: {{ result.file_name }}</p>
                 <p>{{ paragraph }}</p>
             {% endfor %}
         {% endfor %}
