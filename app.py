@@ -5,45 +5,51 @@ app = Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        html_input = request.form['html_input']
-        mp_tags, modified_html = extract_mp_tags(html_input)
-        return render_template('results.html', mp_tags=mp_tags, modified_html=modified_html)
+        text_input = request.form['text_input']
+        word = request.form['word']
+        words = request.form['words']
+        modified_text = modify_text(text_input, word, words)
+        return render_template('results.html', modified_text=modified_text)
     return render_template('index.html')
 
-def extract_mp_tags(html_input):
-    mp_tags = ['<b>', '</b>', '<i>', '</i>', '<p>', '</p>', '<h1>', '</h1>']
-    modified_html = html_input
+def modify_text(text_input, word, words):
+    modified_text = text_input
 
-    stack = []
-    mp_tags_occurrences = []
+    if word:
+        modified_text = remove_word(modified_text, word)
 
-    i = 0
-    while i < len(modified_html):
-        if modified_html[i:i+2] == '</':
-            closing_tag_end = modified_html.find('>', i+2)
-            closing_tag = modified_html[i:closing_tag_end+1]
+    if words:
+        modified_text = find_words(modified_text, words)
 
-            if stack and stack[-1] == closing_tag[2:]:
-                opening_tag_start = modified_html.rfind('<', 0, i)
-                opening_tag = modified_html[opening_tag_start:i+1]
+    return modified_text
 
-                mp_tags_occurrences.append((opening_tag, closing_tag))
-                stack.pop()
+def remove_word(text, word):
+    return text.replace(word, '')
 
-        elif modified_html[i] == '<':
-            opening_tag_end = modified_html.find('>', i+1)
-            opening_tag = modified_html[i:opening_tag_end+1]
+def find_words(text, words):
+    w1, w2 = words.split()
 
-            if opening_tag in mp_tags:
-                stack.append(opening_tag)
+    occurrences = []
+    index = 0
 
-        i += 1
+    while index < len(text):
+        found_index = text.find(w1, index)
+        if found_index == -1:
+            break
 
-    for opening_tag, closing_tag in mp_tags_occurrences:
-        modified_html = modified_html.replace(opening_tag, '')
-        modified_html = modified_html.replace(closing_tag, '')
+        next_index = found_index + len(w1)
+        if next_index < len(text) and text[next_index] == ' ':
+            next_index += 1
 
-    return mp_tags_occurrences, modified_html
+        if text[next_index:].startswith(w2):
+            occurrences.append((found_index, found_index + len(w1) + len(w2)))
+
+        index = next_index
+
+    for start, end in reversed(occurrences):
+        text = text[:start] + text[end:]
+
+    return text
 
 if __name__ == '__main__':
     app.run()
