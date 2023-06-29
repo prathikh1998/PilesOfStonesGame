@@ -65,8 +65,6 @@ def preprocess_documents_from_blob_storage(connection_string, container_name):
         preprocessed_docs.append(tokens)
         file_names.append(blob.name)  # Store the file name
 
-    print(preprocessed_docs)
-    print(file_names)
 
     return preprocessed_docs, file_names
 
@@ -181,9 +179,6 @@ def search():
 
     return render_template('results.html', results=results, most_frequent_words=most_frequent_words)
 
-
-
-
 @app.route('/search_lines', methods=['POST'])
 def search_lines():
     word = request.form.get('word')
@@ -222,6 +217,69 @@ def search_lines():
     return render_template('line.html', matching_sentences=matching_sentences)
 
 
+
+def get_lines_from_blob_storage(file_name):
+    # Connect to your Azure storage account
+    connection_string = 'DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net'
+    container_name = 'sampl1'
+
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(container_name)
+
+    blob_client = container_client.get_blob_client(file_name)
+    lines = blob_client.download_blob().readall().decode('utf-8').split('\n')
+
+    return lines
+
+
+
+@app.route('/replace_and_print', methods=['POST'])
+def replace_and_print():
+    character = request.form['character']
+    replacement = request.form['replacement']
+
+    # Connect to Azure Blob Storage
+    connection_string = 'DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net'
+    container_name = 'sampl1'
+
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(container_name)
+
+    # Get the list of file names in the container
+    file_names = [blob.name for blob in container_client.list_blobs()]
+
+    # Replace the character in the target documents and get the first 8 sentences from each original document
+    modified_documents = []
+    for file_name in file_names:
+        blob_client = container_client.get_blob_client(file_name)
+        document = blob_client.download_blob().readall().decode()
+        
+        modified_document = []
+        original_document = []
+
+        sentence_count = 0
+        for line in document.splitlines():
+            # Split the line into sentences using regex pattern
+            sentences = re.split(r'(?<=[.!?])\s+', line.strip())
+
+            for sentence in sentences:
+                # Replace the character in the sentence
+                modified_sentence = sentence.replace(character, replacement)
+                modified_document.append(modified_sentence)
+
+                # Add the original sentence
+                original_document.append(sentence)
+
+                sentence_count += 1
+                if sentence_count == 8:
+                    break
+            
+            if sentence_count == 8:
+                break
+        
+        modified_documents.append((modified_document, original_document, file_name))
+
+    return render_template('replace.html', modified_documents=modified_documents)
 
 if __name__ == '__main__':
     app.run()
