@@ -1,28 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>HTML Tag Pairs Extraction Result</title>
-    <style>
-        .mp-tag {
-            background-color: yellow;
-        }
-    </style>
+    <title>Text Modification Result</title>
 </head>
 <body>
-    <h1>HTML Tag Pairs Extraction Result</h1>
-    <h2>Parts of the HTML within MP tag pairs:</h2>
-    {% if mp_tags %}
-        {% for opening_tag, closing_tag in mp_tags %}
-            <div class="mp-tag">
-                <p>Opening tag: {{ opening_tag }}</p>
-                <p>Closing tag: {{ closing_tag }}</p>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No MP tag pairs found.</p>
-    {% endif %}
-    <hr>
-    <h2>Modified HTML without MP tags:</h2>
-    <div>{{ modified_html|safe }}</div>
+    <h1>Text Modification Result</h1>
+    <h2>Modified Text:</h2>
+    <div>{{ modified_text|safe }}</div>
 </body>
 </html>
