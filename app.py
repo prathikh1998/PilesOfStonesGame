@@ -1,5 +1,5 @@
 #HERE BOTH ARE SAME app and app2
-#HERE THE FREQUENCY AND THE MATCHING DOCS ARE PRINTED
+#HERE THE FREQUENCY AND THE MATCHING DOCS ARE PRINTED and also the sequence and the first lines with words
 
 import os
 import re
@@ -33,8 +33,17 @@ def preprocess_document(document):
     # Split the text into individual words or tokens
     tokens = document.split()
 
+    # Get the stop words from Azure Blob Storage
+    connection_string = 'DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net'
+    container_name = 'sampl2'
+    blob_name = 'stopwords.txt'
+
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(container_name)
+    blob_client = container_client.get_blob_client(blob_name)
+    stop_words = set(blob_client.download_blob().readall().decode().splitlines())
+
     # Remove stop words
-    stop_words = set(stopwords.words("english"))
     tokens = [token for token in tokens if token not in stop_words]
 
     # Word stemming (optional)
@@ -42,6 +51,7 @@ def preprocess_document(document):
     #tokens = [stemmer.stem(token) for token in tokens]
 
     return tokens
+
 
 # Function to preprocess documents from Azure Blob Storage
 def preprocess_documents_from_blob_storage(connection_string, container_name):
@@ -67,6 +77,19 @@ def preprocess_documents_from_blob_storage(connection_string, container_name):
 
 
     return preprocessed_docs, file_names
+
+def find_most_frequent_combinations(preprocessed_docs, n):
+    combination_frequencies = {}
+    for doc in preprocessed_docs:
+        for i in range(len(doc) - 1):
+            combination = doc[i] + doc[i + 1]
+            if combination in combination_frequencies:
+                combination_frequencies[combination] += 1
+            else:
+                combination_frequencies[combination] = 1
+    sorted_combinations = sorted(combination_frequencies.items(), key=lambda x: x[1], reverse=True)
+    return sorted_combinations[:n]
+
 
 # Function to build the index
 def build_index(preprocessed_docs):
@@ -141,6 +164,56 @@ def get_paragraphs_from_blob_storage(file_name, word):
 def home():
     return render_template('index.html')
 
+def get_stop_words(connection_string, container_name):
+    # Connect to Azure Blob Storage
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(container_name)
+
+    # Get the stop words file from the container
+    blob_client = container_client.get_blob_client('stopwords.txt')
+    stop_words = set(blob_client.download_blob().readall().decode().splitlines())
+
+    return stop_words
+
+
+
+
+@app.route('/search_stop', methods=['POST'])
+def search_stop():
+    connection_string = 'DefaultEndpointsProtocol=https;AccountName=sampl;AccountKey=GLijF+wF353BH7/A3FtGIegOfCfSYrMnZMtsTMT1N9euUX0VB7ihhrmbm+VFjZCZWI4lEos+yd/Q+AStwAJVcw==;EndpointSuffix=core.windows.net'
+    container_name = 'sampl2'
+
+    # Count the occurrence of stop words in the documents
+    stop_words = get_stop_words(connection_string, container_name)
+    word_count = {}
+
+    # Connect to Azure Blob Storage
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(container_name)
+
+    # Get the list of file names in the container
+    file_names = [blob.name for blob in container_client.list_blobs()]
+
+    for file_name in file_names:
+        # Get the blob client for the file
+        blob_client = container_client.get_blob_client(file_name)
+
+        # Download and preprocess the document
+        document = blob_client.download_blob().readall().decode()
+        document_words = preprocess_document(document)
+
+        # Count the occurrence of stop words in the document
+        for word in document_words:
+            if word in stop_words:
+                if word not in word_count:
+                    word_count[word] = 0
+                word_count[word] += 1
+
+    # Render the template with the word counts
+    return render_template('search_results.html', word_count=word_count)
+
+
+
 # Route for handling search requests
 @app.route('/search', methods=['POST'])
 def search():
@@ -164,7 +237,10 @@ def search():
     n = int(request.form['n'])
 
     # Get the n most frequent words
-    most_frequent_words = find_most_frequent_words(index, n)  # Fix the function name
+    most_frequent_words = find_most_frequent_words(index, n)
+
+    # Get the n most frequent two-letter combinations
+    most_frequent_combinations = find_most_frequent_combinations(preprocessed_documents, n)
 
     results = []
     for doc_id, position in matching_documents:
@@ -176,8 +252,8 @@ def search():
         }
         results.append(result)
 
+    return render_template('results.html', results=results, most_frequent_words=most_frequent_words, most_frequent_combinations=most_frequent_combinations)
 
-    return render_template('results.html', results=results, most_frequent_words=most_frequent_words)
 
 @app.route('/search_lines', methods=['POST'])
 def search_lines():
