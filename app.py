@@ -1,86 +1,60 @@
 from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit
-from multiprocessing import Process, Manager
-from redis import Redis
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret_key'
-socketio = SocketIO(app)
-redis = Redis()
 
-class Game:
-    def __init__(self, pile1, pile2, pile3, min_pickup, max_pickup, player1, player2):
-        self.piles = [pile1, pile2, pile3]
-        self.min_pickup = min_pickup
-        self.max_pickup = max_pickup
-        self.players = [player1, player2]
-        self.current_player = 0
-        self.scores = [0, 0]
+# Shared data
+stone_piles = [0, 0, 0]
+players = ['', '']
+scores = [0, 0]
+turn = 0
 
-    def take_turn(self, pile_index, stones_taken):
-        pile = self.piles[pile_index]
-        if stones_taken < self.min_pickup or stones_taken > self.max_pickup or pile < stones_taken:
-            return False
+# Game configuration
+max_stones = 5
+min_stones = 1
 
-        pile -= stones_taken
-        self.piles[pile_index] = pile
-        self.scores[self.current_player] += stones_taken
-
-        self.current_player = (self.current_player + 1) % 2
-        return True
-
-    def is_game_over(self):
-        return all(pile == 0 for pile in self.piles)
-
-    def get_winner(self):
-        if self.scores[0] > self.scores[1]:
-            return self.players[0]
-        elif self.scores[1] > self.scores[0]:
-            return self.players[1]
-        else:
-            return "It's a tie!"
-
-games = {}
-
+# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/start', methods=['POST'])
 def start_game():
-    pile1 = int(request.form['pile1'])
-    pile2 = int(request.form['pile2'])
-    pile3 = int(request.form['pile3'])
-    min_pickup = int(request.form['min_pickup'])
-    max_pickup = int(request.form['max_pickup'])
-    player1 = request.form['player1']
-    player2 = request.form['player2']
+    global stone_piles, players, scores, turn
 
-    game = Game(pile1, pile2, pile3, min_pickup, max_pickup, player1, player2)
-    game_id = len(games) + 1
-    games[game_id] = game
+    stone_piles = [int(request.form['pile1']),
+                   int(request.form['pile2']),
+                   int(request.form['pile3'])]
 
-    socketio.emit('new_game', {'game_id': game_id, 'game': game}, broadcast=True)
+    players = [request.form['player1'], request.form['player2']]
+    scores = [0, 0]
+    turn = 0
 
-    return ''
+    return render_template('game.html', stone_piles=stone_piles, players=players, scores=scores, turn=turn)
 
 @app.route('/play', methods=['POST'])
-def play():
-    game_id = int(request.form['game_id'])
+def play_turn():
+    global stone_piles, players, scores, turn
+
     pile_index = int(request.form['pile_index'])
     stones_taken = int(request.form['stones_taken'])
 
-    game = games[game_id]
-    success = game.take_turn(pile_index, stones_taken)
+    if stone_piles[pile_index] == 0:
+        error_message = "Cannot take stones from an empty pile."
+        return render_template('game.html', stone_piles=stone_piles, players=players, scores=scores, turn=turn, error_message=error_message)
 
-    if game.is_game_over():
-        winner = game.get_winner()
-        del games[game_id]
-        socketio.emit('game_over', {'winner': winner}, broadcast=True)
-    else:
-        socketio.emit('game_update', {'game_id': game_id, 'game': game, 'success': success}, broadcast=True)
+    if stone_piles[pile_index] >= stones_taken:
+        stone_piles[pile_index] -= stones_taken
+        scores[turn] += stones_taken
 
-    return ''
+    # Check if all stone piles are empty
+    if all(pile == 0 for pile in stone_piles):
+        winner = players[scores.index(max(scores))]
+        return render_template('game_over.html', winner=winner, scores=scores)
+
+    turn = (turn + 1) % 2
+
+    return render_template('game.html', stone_piles=stone_piles, players=players, scores=scores, turn=turn)
+
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
+    app.run()
