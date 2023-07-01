@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Nim Game - Game</title>
+    <title>Nim Game</title>
 </head>
 <body>
-    <h1>Nim Game - Game</h1>
+    <h1>Nim Game</h1>
     <h2>Game ID: {{ game_id }}</h2>
-    <h3>Current Player's Turn: {{ game.current_player }}</h3>
+    <h3>Player: {{ player_name }}</h3>
+    <h4>Current Player's Turn: {{ game.current_player }}</h4>
     <h4>Piles:</h4>
     {% for i in range(game.num_piles) %}
         <p>Pile {{ i + 1 }}: {{ game.piles[i] }} stones</p>
     {% endfor %}
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
     <form action="/game/{{ game_id }}" method="POST">
-        <input type="hidden" name="current_player" value="{{ game.current_player }}">
         <label for="pile_index">Enter the pile index:</label>
         <input type="number" name="pile_index" id="pile_index" required>
         <br>
@@ -21,5 +24,10 @@
         <br>
         <input type="submit" value="Take Stones">
     </form>
+    
+    {% if winner %}
+        <h2>Game Over</h2>
+        <h3>Winner: {{ winner }}</h3>
+    {% endif %}
 </body>
 </html>
