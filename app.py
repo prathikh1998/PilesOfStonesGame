@@ -1,60 +1,54 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'
 
-# Shared data
-stone_piles = [0, 0, 0]
-players = ['', '']
-scores = [0, 0]
-turn = 0
+# Store the game data in session
+def get_game_data():
+    if 'game_data' not in session:
+        # Initialize game data
+        session['game_data'] = {
+            'player1_stones': 0,
+            'player2_stones': 0
+        }
+    
+    if 'player_turn' not in session:
+        # Initialize player turn
+        session['player_turn'] = 1
+    
+    return session['game_data']
 
-# Game configuration
-max_stones = 5
-min_stones = 1
-
-# Routes
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-@app.route('/start', methods=['POST'])
-def start_game():
-    global stone_piles, players, scores, turn
-
-    stone_piles = [int(request.form['pile1']),
-                   int(request.form['pile2']),
-                   int(request.form['pile3'])]
-
-    players = [request.form['player1'], request.form['player2']]
-    scores = [0, 0]
-    turn = 0
-
-    return render_template('game.html', stone_piles=stone_piles, players=players, scores=scores, turn=turn)
+    game_data = get_game_data()
+    return render_template('index.html', game_data=game_data)
 
 @app.route('/play', methods=['POST'])
-def play_turn():
-    global stone_piles, players, scores, turn
+def play():
+    game_data = get_game_data()
+    player_move = request.form['move']
+    
+    if session['player_turn'] == 1:
+        game_data['player1_stones'] += int(player_move)
+        session['player_turn'] = 2
+    else:
+        game_data['player2_stones'] += int(player_move)
+        session['player_turn'] = 1
+    
+    return redirect('/')
 
-    pile_index = int(request.form['pile_index'])
-    stones_taken = int(request.form['stones_taken'])
-
-    if stone_piles[pile_index] == 0:
-        error_message = "Cannot take stones from an empty pile."
-        return render_template('game.html', stone_piles=stone_piles, players=players, scores=scores, turn=turn, error_message=error_message)
-
-    if stone_piles[pile_index] >= stones_taken:
-        stone_piles[pile_index] -= stones_taken
-        scores[turn] += stones_taken
-
-    # Check if all stone piles are empty
-    if all(pile == 0 for pile in stone_piles):
-        winner = players[scores.index(max(scores))]
-        return render_template('game_over.html', winner=winner, scores=scores)
-
-    turn = (turn + 1) % 2
-
-    return render_template('game.html', stone_piles=stone_piles, players=players, scores=scores, turn=turn)
-
+@app.route('/result')
+def result():
+    game_data = get_game_data()
+    
+    if game_data['player1_stones'] > game_data['player2_stones']:
+        winner = 'Player 1'
+    elif game_data['player1_stones'] < game_data['player2_stones']:
+        winner = 'Player 2'
+    else:
+        winner = 'No one (It\'s a tie!)'
+    
+    return render_template('game.html', winner=winner)
 
 if __name__ == '__main__':
     app.run()
