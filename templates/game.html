@@ -1,39 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Piles of Stones Game</title>
+    <title>Game Result</title>
 </head>
 <body>
-    <h1>Piles of Stones Game</h1>
-    <p>Current Player: {{ players[turn] }}</p>
-    <p>Scores: {{ scores[0] }} - {{ scores[1] }}</p>
-    <table>
-        <tr>
-            <th>Pile 1</th>
-            <th>Pile 2</th>
-            <th>Pile 3</th>
-        </tr>
-        <tr>
-            <td>{{ stone_piles[0] }}</td>
-            <td>{{ stone_piles[1] }}</td>
-            <td>{{ stone_piles[2] }}</td>
-        </tr>
-    </table>
-
-    {% if error_message %}
-        <p>{{ error_message }}</p>
-    {% endif %}
-
-    <form action="/play" method="post">
-        <label for="pile_index">Select a pile:</label>
-        <select name="pile_index">
-            <option value="0">Pile 1</option>
-            <option value="1">Pile 2</option>
-            <option value="2">Pile 3</option>
-        </select><br>
-        <label for="stones_taken">Number of stones to take:</label>
-        <input type="number" name="stones_taken" min="{{ min_stones }}" max="{{ max_stones }}" required><br>
-        <input type="submit" value="Play">
-    </form>
+    <h1>Game Result</h1>
+    <h2>The winner is: {{ winner }}</h2>
 </body>
 </html>

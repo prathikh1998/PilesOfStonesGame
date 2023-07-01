@@ -1,22 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Piles of Stones Game</title>
+    <title>Game</title>
 </head>
 <body>
-    <h1>Piles of Stones Game</h1>
-    <form action="/start" method="post">
-        <label for="player1">Player 1 Name:</label>
-        <input type="text" name="player1" required><br>
-        <label for="player2">Player 2 Name:</label>
-        <input type="text" name="player2" required><br>
-        <label for="pile1">Pile 1 Stones:</label>
-        <input type="number" name="pile1" required><br>
-        <label for="pile2">Pile 2 Stones:</label>
-        <input type="number" name="pile2" required><br>
-        <label for="pile3">Pile 3 Stones:</label>
-        <input type="number" name="pile3" required><br>
-        <input type="submit" value="Start Game">
+    <h1>Game Board</h1>
+    <p>Player 1 Stones: {{ game_data['player1_stones'] }}</p>
+    <p>Player 2 Stones: {{ game_data['player2_stones'] }}</p>
+    <form action="/play" method="POST">
+        <input type="text" name="move" placeholder="Enter your move">
+        <input type="submit" value="Make Move">
     </form>
+    <a href="/result">View Result</a>
 </body>
 </html>
