@@ -1,1 +1,243 @@
+<!DOCTYPE html>
+<html>
 
+<head>
+    <title>Piles of Stones Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0e0e0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .game-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border: 2px solid #ccc;
+        }
+
+        #game-info,
+        #start-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #game-info form,
+        #start-form form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        #game-info label,
+        #start-form label {
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        #game-info input[type="number"],
+        #start-form input[type="text"],
+        #start-form input[type="number"] {
+            padding: 12px 15px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            width: 100px;
+            margin-bottom: 10px;
+        }
+
+        #game-info button,
+        #start-form button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        #game-info button:hover,
+        #start-form button:hover {
+            background-color: #45a049;
+        }
+
+        #winner-section {
+            margin-top: 20px;
+        }
+
+        .player1 {
+            color: #FF0000;
+        }
+
+        .player2 {
+            color: #0000FF;
+        }
+
+        .winner {
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var socket = io();
+
+            socket.on('game_state', function (data) {
+                if (data.started) {
+                    updateGameState(data.game_state);
+                    $('#start-form').hide();
+                    $('#game-info').show();
+                } else {
+                    $('#start-form').show();
+                    $('#game-info').hide();
+                }
+            });
+
+            socket.on('game_started', function (data) {
+                updateGameState(data.game_state);
+                $('#start-form').hide();
+                $('#game-info').show();
+                $('#player1-name').text(data.player1).addClass('player1');
+                $('#player2-name').text(data.player2).addClass('player2');
+                $('#winner').text('').removeClass('winner');
+            });
+
+            socket.on('move_made', function (data) {
+                updateGameState(data.game_state);
+            });
+
+            socket.on('winner_declared', function (data) {
+                updateGameState(data.game_state);
+                $('#winner').text(data.game_state.winner);
+                $('#winner-section').show();
+                $('#game-form').hide();
+            });
+
+            function updateGameState(game_state) {
+                var players = game_state.players;
+                $('#active-player').text(players[game_state.active_player]);
+                for (var i = 0; i < game_state.piles.length; i++) {
+                    $('#pile-' + i).text(game_state.piles[i]);
+                }
+                $('#player1-score').text(players[0] + ' Score: ' + game_state.scores[0]);
+                $('#player2-score').text(players[1] + ' Score: ' + game_state.scores[1]);
+            }
+
+            $('#start-form').on('submit', function (event) {
+                event.preventDefault();
+                var player1 = $('#player1').val();
+                var player2 = $('#player2').val();
+                var piles = [
+                    parseInt($('#pile0').val()),
+                    parseInt($('#pile1').val()),
+                    parseInt($('#pile2').val())
+                ];
+                var activePlayer = parseInt($('input[name=activePlayer]:checked').val());
+                socket.emit('start_game', { 'player1': player1, 'player2': player2, 'piles': piles, 'active_player': activePlayer });
+            });
+
+            $('#game-form').on('submit', function (event) {
+                event.preventDefault();
+                var move = $('#move').val();
+                var stones = $('#stones').val();
+                socket.emit('make_move', { 'move': move, 'stones': stones });
+            });
+
+            socket.on('connect', function () {
+                socket.emit('game_loaded');
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Piles of Stones Game</h1>
+        <div id="game-info" style="display: none;" class="game-container">
+            <h2>Game State</h2>
+            <p>Active Player: <span id="active-player"></span></p>
+            <table>
+                <tr>
+                    <th>Pile 0</th>
+                    <th>Pile 1</th>
+                    <th>Pile 2</th>
+                </tr>
+                <tr>
+                    <td id="pile-0"></td>
+                    <td id="pile-1"></td>
+                    <td id="pile-2"></td>
+                </tr>
+            </table>
+            <p id="player1-score" class="player1"></p>
+            <p id="player2-score" class="player2"></p>
+            <div id="winner-section" style="display: none;">
+                <h2>Winner</h2>
+                <p>The winner is: <span id="winner" class="winner"></span></p>
+            </div>
+            <form id="game-form">
+                <label for="move">Move (0-2):</label>
+                <input type="number" id="move" min="0" max="2" required>
+                <label for="stones">Stones:</label>
+                <input type="number" id="stones" min="1" required>
+                <button type="submit">Make Move</button>
+            </form>
+        </div>
+        <div id="start-form" class="game-container">
+            <h2>Start Game</h2>
+            <form>
+                <label for="player1">Player 1:</label>
+                <input type="text" id="player1" required>
+                <label for="player2">Player 2:</label>
+                <input type="text" id="player2" required>
+                <label for="pile0">Pile 0:</label>
+                <input type="number" id="pile0" min="0" required>
+                <label for="pile1">Pile 1:</label>
+                <input type="number" id="pile1" min="0" required>
+                <label for="pile2">Pile 2:</label>
+                <input type="number" id="pile2" min="0" required>
+                <label for="activePlayer">Active Player:</label>
+                <input type="radio" id="activePlayer" name="activePlayer" value="0" checked>
+                <input type="radio" id="activePlayer" name="activePlayer" value="1">
+                <button type="submit">Start Game</button>
+            </form>
+        </div>
+    </div>
+    <script type="text/javascript" charset="utf-8">
+        var socket = io();
+        socket.on('connect', function () {
+            socket.emit('game_loaded');
+        });
+    </script>
+</body>
+
+</html>
