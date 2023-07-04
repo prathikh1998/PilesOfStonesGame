@@ -138,7 +138,12 @@
 
             socket.on('winner_declared', function (data) {
                 updateGameState(data.game_state);
-                $('#winner').text(data.game_state.winner);
+                if (data.game_state.scores[0] === data.game_state.scores[1]) {
+                    $('#winner').text("It's a tie");
+                }
+                else {
+                    $('#winner').text(data.game_state.winner);
+                }
                 $('#winner-section').show();
                 $('#game-form').hide();
             });
@@ -146,9 +151,12 @@
             function updateGameState(game_state) {
                 var players = game_state.players;
                 $('#active-player').text(players[game_state.active_player]);
-                for (var i = 0; i < game_state.piles.length; i++) {
-                    $('#pile-' + i).text(game_state.piles[i]);
+
+                var piles = game_state.piles;
+                for (var i = 0; i < piles.length; i++) {
+                    $('#pile-' + i).text(piles[i]);
                 }
+
                 $('#player1-score').text(players[0] + ' Score: ' + game_state.scores[0]);
                 $('#player2-score').text(players[1] + ' Score: ' + game_state.scores[1]);
             }
@@ -168,10 +176,17 @@
 
             $('#game-form').on('submit', function (event) {
                 event.preventDefault();
-                var move = $('#move').val();
-                var stones = $('#stones').val();
-                socket.emit('make_move', { 'move': move, 'stones': stones });
+                var move = parseInt($('#move').val());
+                var stones = parseInt($('#stones').val());
+                var pile = $('#pile-' + move);
+
+                if (pile.text() > 0 && stones > 0) {
+                    socket.emit('make_move', { 'move': move, 'stones': stones });
+                } else {
+                    alert('Invalid move. Please choose a pile with stones.');
+                }
             });
+
 
             socket.on('connect', function () {
                 socket.emit('game_loaded');
