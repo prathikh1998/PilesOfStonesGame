@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>History Bee - Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>History Bee - Player</h1>
+    <div id="scores"></div>
+    <hr>
+    <h3 id="question"></h3>
+    <div id="response_div">
+        <input type="text" id="answer_input">
+        <button onclick="sendAnswer()">Send</button>
+    </div>
+
+    <script>
+        const socket = io();
+
+        function updateScores(scores) {
+            const scoresDiv = document.getElementById('scores');
+            scoresDiv.innerHTML = '';
+            for (const [player, score] of Object.entries(scores)) {
+                const scoreText = `${player}: ${score}`;
+                const scoreElement = document.createElement('p');
+                scoreElement.innerText = scoreText;
+                scoresDiv.appendChild(scoreElement);
+            }
+        }
+
+        function sendAnswer() {
+            const answerInput = document.getElementById('answer_input');
+            const answer = answerInput.value;
+            answerInput.value = '';
+
+            socket.emit('answer', answer);
+        }
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            const playerName = prompt('Please enter your name:');
+            socket.emit('join', playerName);
+        });
+
+        socket.on('update_scores', (scores) => {
+            updateScores(scores);
+        });
+
+        socket.on('new_question', (question) => {
+            const questionElement = document.getElementById('question');
+            questionElement.innerText = `Question: ${question}`;
+        });
+
+        socket.on('end_game', () => {
+            console.log('Game over!');
+        });
+    </script>
+</body>
+</html>

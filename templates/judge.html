@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>History Bee - Judge</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>History Bee - Judge</h1>
+    <div id="scores"></div>
+    <hr>
+    <div id="question_div">
+        <h3>Question:</h3>
+        <input type="text" id="question_input">
+        <button onclick="sendQuestion()">Send</button>
+    </div>
+    <hr>
+    <h3>Player Responses:</h3>
+    <div id="response_div"></div>
+    <hr>
+    <h3>Log:</h3>
+    <div id="log_div"></div>
+
+    <script>
+        const socket = io();
+
+        function updateScores(scores) {
+            const scoresDiv = document.getElementById('scores');
+            scoresDiv.innerHTML = '';
+            for (const [player, score] of Object.entries(scores)) {
+                const scoreText = `${player}: ${score}`;
+                const scoreElement = document.createElement('p');
+                scoreElement.innerText = scoreText;
+                scoresDiv.appendChild(scoreElement);
+            }
+        }
+
+        function sendQuestion() {
+            const questionInput = document.getElementById('question_input');
+            const question = questionInput.value;
+            questionInput.value = '';
+
+            socket.emit('question', question);
+        }
+
+        function addResponse(response) {
+            const responseDiv = document.getElementById('response_div');
+            const responseText = `[${response.timestamp}, ${response.player}] ${response.answer}`;
+            const responseElement = document.createElement('p');
+            responseElement.innerText = responseText;
+            responseDiv.appendChild(responseElement);
+        }
+
+        function addLogEntry(entry) {
+            const logDiv = document.getElementById('log_div');
+            const logEntryText = `[${entry.timestamp}, ${entry.originator}] ${entry.message}`;
+            const logEntryElement = document.createElement('p');
+            logEntryElement.innerText = logEntryText;
+            logDiv.appendChild(logEntryElement);
+        }
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('update_scores', (scores) => {
+            updateScores(scores);
+        });
+
+        socket.on('new_question', (question) => {
+            console.log('New question:', question);
+        });
+
+        socket.on('judgment', (judgment) => {
+            console.log('Judgment:', judgment);
+            if (judgment.correct) {
+                console.log('Correct answer!');
+            } else {
+                console.log('Incorrect answer!');
+            }
+        });
+
+        socket.on('end_game', () => {
+            console.log('Game over!');
+        });
+
+        socket.on('log_entry', (entry) => {
+            console.log('Log entry:', entry);
+        });
+    </script>
+</body>
+</html>
