@@ -9,6 +9,7 @@ socketio = SocketIO(app)
 players = {}
 scores = {}
 question = ""
+player_responses = {}
 
 @app.route('/')
 def index():
@@ -36,13 +37,14 @@ def handle_question(q):
 @socketio.on('answer')
 def handle_answer(answer):
     player_name = players[request.sid]
-    if answer == question:
-        scores[player_name] += 1
-        emit('judgment', {'answer': answer, 'correct': True})
-        emit('end_game', broadcast=True)
-    else:
-        scores[player_name] -= 2
-        emit('judgment', {'answer': answer, 'correct': False})
+    player_responses[player_name] = answer
+    emit('response', {'player': player_name, 'answer': answer}, broadcast=True)
+
+@socketio.on('judge_response')
+def handle_judge_response(data):
+    player_name = data['player']
+    response = data['response']
+    emit('judge_response', {'player': player_name, 'response': response}, broadcast=True)
 
 if __name__ == '__main__':
     socketio.run(app)
