@@ -17,11 +17,24 @@
     <h3>Player Responses:</h3>
     <div id="response_div"></div>
     <hr>
+    <div id="judgment_div">
+        <h3>Judge Response:</h3>
+        <div id="judgment_buttons">
+            <button onclick="sendJudgment('OK')">OK</button>
+            <button onclick="sendJudgment('Not OK')">Not OK</button>
+        </div>
+        <div id="player_select_div" style="display: none;">
+            <label for="player_select">Select Player:</label>
+            <select id="player_select"></select>
+        </div>
+    </div>
+    <hr>
     <h3>Log:</h3>
     <div id="log_div"></div>
 
     <script>
         const socket = io();
+        let playerResponses = {};
 
         function updateScores(scores) {
             const scoresDiv = document.getElementById('scores');
@@ -43,19 +56,42 @@
         }
 
         function addResponse(response) {
+            playerResponses[response.player] = response.answer;
             const responseDiv = document.getElementById('response_div');
-            const responseText = `[${response.timestamp}, ${response.player}] ${response.answer}`;
-            const responseElement = document.createElement('p');
-            responseElement.innerText = responseText;
-            responseDiv.appendChild(responseElement);
+            responseDiv.innerHTML = '';
+            for (const [player, answer] of Object.entries(playerResponses)) {
+                const responseText = `[${player}] ${answer}`;
+                const responseElement = document.createElement('p');
+                responseElement.innerText = responseText;
+                responseDiv.appendChild(responseElement);
+            }
+            showPlayerSelect();
         }
 
-        function addLogEntry(entry) {
-            const logDiv = document.getElementById('log_div');
-            const logEntryText = `[${entry.timestamp}, ${entry.originator}] ${entry.message}`;
-            const logEntryElement = document.createElement('p');
-            logEntryElement.innerText = logEntryText;
-            logDiv.appendChild(logEntryElement);
+        function showPlayerSelect() {
+            const playerSelectDiv = document.getElementById('player_select_div');
+            playerSelectDiv.style.display = 'block';
+
+            const playerSelect = document.getElementById('player_select');
+            playerSelect.innerHTML = '';
+            for (const player of Object.keys(playerResponses)) {
+                const option = document.createElement('option');
+                option.value = player;
+                option.innerText = player;
+                playerSelect.appendChild(option);
+            }
+        }
+
+        function sendJudgment(response) {
+            const playerSelect = document.getElementById('player_select');
+            const selectedPlayer = playerSelect.options[playerSelect.selectedIndex].value;
+
+            const data = {
+                player: selectedPlayer,
+                response: response
+            };
+
+            socket.emit('judge_response', data);
         }
 
         socket.on('connect', () => {
@@ -70,13 +106,22 @@
             console.log('New question:', question);
         });
 
-        socket.on('judgment', (judgment) => {
-            console.log('Judgment:', judgment);
-            if (judgment.correct) {
-                console.log('Correct answer!');
-            } else {
-                console.log('Incorrect answer!');
+        socket.on('response', (response) => {
+            console.log('Response:', response);
+            addResponse(response);
+        });
+
+        socket.on('judge_response', (data) => {
+            const player = data.player;
+            const response = data.response;
+
+            const responseDiv = document.getElementById('response_div');
+            const playerResponse = responseDiv.querySelector(`p[data-player="${player}"]`);
+            if (playerResponse) {
+                playerResponse.innerText = `[${player}] ${playerResponses[player]} - Judge Response: ${response}`;
             }
+
+            showPlayerSelect();
         });
 
         socket.on('end_game', () => {

@@ -51,6 +51,13 @@
             questionElement.innerText = `Question: ${question}`;
         });
 
+        socket.on('judge_response', (data) => {
+            const player = data.player;
+            const response = data.response;
+            const questionElement = document.getElementById('question');
+            questionElement.innerText = `Question: ${question} - Judge Response: ${response}`;
+        });
+
         socket.on('end_game', () => {
             console.log('Game over!');
         });
