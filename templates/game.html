@@ -1,258 +1,233 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Piles of Stones Game</title>
+    <h1 style="text-align: center;">CLOUD COMPUTING QUIZ 6 - prathik hegde(1002084424)</h1>
+    <title>History Bee Game</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #e0e0e0;
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
             padding: 20px;
             text-align: center;
         }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-
-        .game-container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        h1, h2 {
             margin-bottom: 20px;
         }
 
-        h1 {
-            color: #333;
+        label {
+            display: block;
+            margin-bottom: 10px;
         }
 
-        table {
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
+        input[type="text"], input[type="number"] {
+            width: 100%;
             padding: 10px;
-            border: 2px solid #ccc;
-        }
-
-        #game-info,
-        #start-form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #game-info form,
-        #start-form form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 10px;
-        }
-
-        #game-info label,
-        #start-form label {
-            margin-bottom: 10px;
-            color: #555;
-            font-weight: bold;
-        }
-
-        #game-info input[type="number"],
-        #start-form input[type="text"],
-        #start-form input[type="number"] {
-            padding: 12px 15px;
-            border: 2px solid #ccc;
-            border-radius: 4px;
-            width: 100px;
             margin-bottom: 10px;
         }
 
-        #game-info button,
-        #start-form button {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 4px;
+        button {
+            padding: 10px 20px;
             background-color: #4CAF50;
-            color: white;
+            color: #fff;
+            border: none;
             cursor: pointer;
         }
 
-        #game-info button:hover,
-        #start-form button:hover {
-            background-color: #45a049;
-        }
-
-        #winner-section {
+        table {
+            width: 100%;
             margin-top: 20px;
+            border-collapse: collapse;
         }
 
-        .player1 {
-            color: #FF0000;
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
         }
 
-        .player2 {
-            color: #0000FF;
+        th {
+            background-color: #f2f2f2;
         }
 
-        .winner {
-            font-weight: bold;
-            font-size: 18px;
+        .question-log {
+            text-align: left;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
         }
     </style>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function () {
-            var socket = io();
-
-            socket.on('game_state', function (data) {
-                if (data.started) {
-                    updateGameState(data.game_state);
-                    $('#start-form').hide();
-                    $('#game-info').show();
-                } else {
-                    $('#start-form').show();
-                    $('#game-info').hide();
-                }
-            });
-
-            socket.on('game_started', function (data) {
-                updateGameState(data.game_state);
-                $('#start-form').hide();
-                $('#game-info').show();
-                $('#player1-name').text(data.player1).addClass('player1');
-                $('#player2-name').text(data.player2).addClass('player2');
-                $('#winner').text('').removeClass('winner');
-            });
-
-            socket.on('move_made', function (data) {
-                updateGameState(data.game_state);
-            });
-
-            socket.on('winner_declared', function (data) {
-                updateGameState(data.game_state);
-                if (data.game_state.scores[0] === data.game_state.scores[1]) {
-                    $('#winner').text("It's a tie");
-                }
-                else {
-                    $('#winner').text(data.game_state.winner);
-                }
-                $('#winner-section').show();
-                $('#game-form').hide();
-            });
-
-            function updateGameState(game_state) {
-                var players = game_state.players;
-                $('#active-player').text(players[game_state.active_player]);
-
-                var piles = game_state.piles;
-                for (var i = 0; i < piles.length; i++) {
-                    $('#pile-' + i).text(piles[i]);
-                }
-
-                $('#player1-score').text(players[0] + ' Score: ' + game_state.scores[0]);
-                $('#player2-score').text(players[1] + ' Score: ' + game_state.scores[1]);
-            }
-
-            $('#start-form').on('submit', function (event) {
-                event.preventDefault();
-                var player1 = $('#player1').val();
-                var player2 = $('#player2').val();
-                var piles = [
-                    parseInt($('#pile0').val()),
-                    parseInt($('#pile1').val()),
-                    parseInt($('#pile2').val())
-                ];
-                var activePlayer = parseInt($('input[name=activePlayer]:checked').val());
-                socket.emit('start_game', { 'player1': player1, 'player2': player2, 'piles': piles, 'active_player': activePlayer });
-            });
-
-            $('#game-form').on('submit', function (event) {
-                event.preventDefault();
-                var move = parseInt($('#move').val());
-                var stones = parseInt($('#stones').val());
-                var pile = $('#pile-' + move);
-
-                if (pile.text() > 0 && stones > 0) {
-                    socket.emit('make_move', { 'move': move, 'stones': stones });
-                } else {
-                    alert('Invalid move. Please choose a pile with stones.');
-                }
-            });
-
-
-            socket.on('connect', function () {
-                socket.emit('game_loaded');
-            });
-        });
-    </script>
 </head>
-
 <body>
     <div class="container">
-        <h1>Piles of Stones Game</h1>
-        <div id="game-info" style="display: none;" class="game-container">
-            <h2>Game State</h2>
-            <p>Active Player: <span id="active-player"></span></p>
-            <table>
+        <h1>History Bee Game</h1>
+
+        <div id="game-form">
+            <h2>Start Game</h2>
+            <label for="player1-name">Player 1 Name:</label>
+            <input type="text" id="player1-name" required>
+
+            <label for="player2-name">Player 2 Name:</label>
+            <input type="text" id="player2-name" required>
+
+            <label for="max-attempts">Max Attempts:</label>
+            <input type="number" id="max-attempts" min="1" value="4" required>
+
+            <label for="initial-score">Initial Score:</label>
+            <input type="number" id="initial-score" min="1" value="5" required>
+
+            <button onclick="startGame()">Start</button>
+        </div>
+
+        <div id="game-container" style="display: none;">
+            <h2>Question</h2>
+            <label for="question">Question:</label>
+            <input type="text" id="question" required>
+
+            <button onclick="sendQuestion()">Send Question</button>
+
+            <h2>Player Scores</h2>
+            <table id="score-table">
                 <tr>
-                    <th>Pile 0</th>
-                    <th>Pile 1</th>
-                    <th>Pile 2</th>
+                    <th>Player</th>
+                    <th>Score</th>
                 </tr>
                 <tr>
-                    <td id="pile-0"></td>
-                    <td id="pile-1"></td>
-                    <td id="pile-2"></td>
+                    <td id="player1-name"></td>
+                    <td id="player1-score"></td>
+                </tr>
+                <tr>
+                    <td id="player2-name"></td>
+                    <td id="player2-score"></td>
                 </tr>
             </table>
-            <p id="player1-score" class="player1"></p>
-            <p id="player2-score" class="player2"></p>
-            <div id="winner-section" style="display: none;">
-                <h2>Winner</h2>
-                <p>The winner is: <span id="winner" class="winner"></span></p>
+
+            <div class="question-log">
+                <h2>Question Log</h2>
+                <ul id="question-log-list"></ul>
             </div>
-            <form id="game-form">
-                <label for="move">Move (0-2):</label>
-                <input type="number" id="move" min="0" max="2" required>
-                <label for="stones">Stones:</label>
-                <input type="number" id="stones" min="1" required>
-                <button type="submit">Make Move</button>
-            </form>
-        </div>
-        <div id="start-form" class="game-container">
-            <h2>Start Game</h2>
-            <form>
-                <label for="player1">Player 1:</label>
-                <input type="text" id="player1" required>
-                <label for="player2">Player 2:</label>
-                <input type="text" id="player2" required>
-                <label for="pile0">Pile 0:</label>
-                <input type="number" id="pile0" min="0" required>
-                <label for="pile1">Pile 1:</label>
-                <input type="number" id="pile1" min="0" required>
-                <label for="pile2">Pile 2:</label>
-                <input type="number" id="pile2" min="0" required>
-                <label for="activePlayer">Active Player:</label>
-                <input type="radio" id="activePlayer" name="activePlayer" value="0" checked>
-                <input type="radio" id="activePlayer" name="activePlayer" value="1">
-                <button type="submit">Start Game</button>
-            </form>
         </div>
     </div>
-    <script type="text/javascript" charset="utf-8">
-        var socket = io();
-        socket.on('connect', function () {
-            socket.emit('game_loaded');
-        });
+
+    <script>
+        const gameForm = document.getElementById('game-form');
+        const gameContainer = document.getElementById('game-container');
+        const player1NameElement = document.getElementById('player1-name');
+        const player2NameElement = document.getElementById('player2-name');
+        const player1ScoreElement = document.getElementById('player1-score');
+        const player2ScoreElement = document.getElementById('player2-score');
+        const questionLogList = document.getElementById('question-log-list');
+        let player1;
+        let player2;
+        let judge;
+
+        function startGame() {
+            const maxAttempts = parseInt(document.getElementById('max-attempts').value);
+            const initialScore = parseInt(document.getElementById('initial-score').value);
+            player1 = new Player(player1NameElement.value, initialScore);
+            player2 = new Player(player2NameElement.value, initialScore);
+            judge = new Judge(player1, player2, maxAttempts, initialScore);
+            clearQuestionLog();
+            updatePlayerScores();
+            showGameContainer();
+        }
+
+        function sendQuestion() {
+            const question = document.getElementById('question').value;
+            judge.send_question(question);
+            addQuestionLogEntry(`[${getTime()}] Judge: ${question}`);
+        }
+
+        function judgeResponse(player, response) {
+            judge.judge_response(player, response);
+            addQuestionLogEntry(`[${getTime()}] ${player.name}: ${response}`);
+            updatePlayerScores();
+        }
+
+        function updatePlayerScores() {
+            player1ScoreElement.textContent = player1.score;
+            player2ScoreElement.textContent = player2.score;
+        }
+
+
+        function addQuestionLogEntry(entry) {
+            const logEntry = document.createElement('li');
+            logEntry.textContent = entry;
+            questionLogList.appendChild(logEntry);
+        }
+
+        function clearQuestionLog() {
+            questionLogList.innerHTML = '';
+        }
+
+        function showGameContainer() {
+            gameForm.style.display = 'none';
+            gameContainer.style.display = 'block';
+        }
+
+        function getTime() {
+            // Return current time in format HH:MM:SS
+            const date = new Date();
+            const hours = formatTimeUnit(date.getHours());
+            const minutes = formatTimeUnit(date.getMinutes());
+            const seconds = formatTimeUnit(date.getSeconds());
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        function formatTimeUnit(unit) {
+            // Pad single-digit unit with leading zero
+            return unit.toString().padStart(2, '0');
+        }
+
+        // Player class
+        class Player {
+            constructor(name, initialScore) {
+                this.name = name;
+                this.score = initialScore;
+            }
+        }
+
+        // Judge class
+        class Judge {
+            constructor(player1, player2, maxAttempts, initialScore) {
+                this.player1 = player1;
+                this.player2 = player2;
+                this.maxAttempts = maxAttempts;
+                this.initialScore = initialScore;
+                this.question = '';
+                this.currentAttempts = 0;
+            }
+
+            send_question(question) {
+                this.question = question;
+                this.currentAttempts = 0;
+                clearQuestionLog();
+                addQuestionLogEntry(`Judge: ${question}`);
+            }
+
+            judge_response(player, response) {
+                if (response === this.question) {
+                    this.correct_response(player);
+                } else {
+                    this.incorrect_response(player);
+                }
+            }
+
+            correct_response(player) {
+                player.score += 1;
+                updatePlayerScores();
+                addQuestionLogEntry('Judge: OK');
+            }
+
+            incorrect_response(player) {
+                this.currentAttempts += 1;
+                if (this.currentAttempts >= this.maxAttempts) {
+                    player.score -= 2;
+                    updatePlayerScores();
+                    addQuestionLogEntry('Judge: NO');
+                }
+            }
+        }
     </script>
 </body>
-
 </html>
