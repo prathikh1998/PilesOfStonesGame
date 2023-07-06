@@ -1,74 +1,48 @@
 from flask import Flask, render_template, request
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your-secret-key'
+socketio = SocketIO(app)
 
-class Game:
-    def __init__(self):
-        self.player1 = {'name': 'P1', 'score': 0}
-        self.player2 = {'name': 'P2', 'score': 0}
-        self.judge = {'name': 'J'}
-        self.question_log = []
-        self.current_time = 0
-
-    def reset_game(self):
-        self.player1['score'] = 0
-        self.player2['score'] = 0
-        self.question_log = []
-        self.current_time = 0
-
-    def add_question_log_entry(self, sender, message):
-        entry = {
-            'time': self.current_time,
-            'sender': sender,
-            'message': message
-        }
-        self.question_log.append(entry)
-
-    def update_scores(self, correct_player, incorrect_player):
-        correct_player['score'] += 1
-        incorrect_player['score'] -= 2
-
-    def get_current_time(self):
-        return self.current_time
-
-
-game = Game()
-
+# Game state variables
+players = {}
+scores = {}
+question = ""
 
 @app.route('/')
 def index():
-    return render_template('game.html', player1=game.player1, player2=game.player2, question_log=game.question_log, current_time=game.get_current_time())
+    return render_template('judge.html')
 
+@app.route('/player')
+def player():
+    return render_template('player.html')
 
-@app.route('/start_game', methods=['POST'])
-def start_game():
-    game.reset_game()
-    return 'Game started!'
+@socketio.on('connect')
+def handle_connect():
+    emit('update_scores', scores)
 
+@socketio.on('join')
+def handle_join(player_name):
+    players[request.sid] = player_name
+    scores[player_name] = 0
 
-@app.route('/submit_answer', methods=['POST'])
-def submit_answer():
-    sender = request.form['sender']
-    message = request.form['message']
+@socketio.on('question')
+def handle_question(q):
+    global question
+    question = q
+    emit('new_question', q, broadcast=True)
 
-    if sender == game.player1['name']:
-        correct_player = game.player1
-        incorrect_player = game.player2
+@socketio.on('answer')
+def handle_answer(answer):
+    player_name = players[request.sid]
+    if answer == question:
+        scores[player_name] += 1
+        emit('judgment', {'answer': answer, 'correct': True})
+        emit('end_game', broadcast=True)
     else:
-        correct_player = game.player2
-        incorrect_player = game.player1
-
-    game.current_time += 1
-    game.add_question_log_entry(sender, message)
-
-    if message.lower() == '1812':
-        game.update_scores(correct_player, incorrect_player)
-        game.add_question_log_entry(game.judge['name'], 'OK')
-    else:
-        game.add_question_log_entry(game.judge['name'], 'NO')
-
-    return 'Answer submitted!'
-
+        scores[player_name] -= 2
+        emit('judgment', {'answer': answer, 'correct': False})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app)
