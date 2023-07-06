@@ -1,84 +1,74 @@
-import time
 from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit
-import redis
 
-class Player:
-    def __init__(self, name, score):
-        self.name = name
-        self.score = score
+app = Flask(__name__)
 
-class Judge:
-    def __init__(self, player1, player2, max_attempts, initial_score):
-        self.player1 = player1
-        self.player2 = player2
-        self.max_attempts = max_attempts
-        self.initial_score = initial_score
+class Game:
+    def __init__(self):
+        self.player1 = {'name': 'P1', 'score': 0}
+        self.player2 = {'name': 'P2', 'score': 0}
+        self.judge = {'name': 'J'}
         self.question_log = []
-        self.start_time = 0
+        self.current_time = 0
 
-    def start_game(self):
-        self.player1.score = self.initial_score
-        self.player2.score = self.initial_score
+    def reset_game(self):
+        self.player1['score'] = 0
+        self.player2['score'] = 0
         self.question_log = []
-        self.start_time = time.time()
+        self.current_time = 0
 
-    def log_question(self, sender, question):
-        current_time = time.time() - self.start_time
-        self.question_log.append(f'[{current_time:.2f}, {sender.name}] {question}')
+    def add_question_log_entry(self, sender, message):
+        entry = {
+            'time': self.current_time,
+            'sender': sender,
+            'message': message
+        }
+        self.question_log.append(entry)
 
-    def log_response(self, sender, response, is_correct):
-        current_time = time.time() - self.start_time
-        self.question_log.append(f'[{current_time:.2f}, {sender.name}] {response}')
-        if is_correct:
-            self.question_log.append(f'[{current_time:.2f}, Judge] OK')
-        else:
-            self.question_log.append(f'[{current_time:.2f}, Judge] NO')
+    def update_scores(self, correct_player, incorrect_player):
+        correct_player['score'] += 1
+        incorrect_player['score'] -= 2
 
-    def send_question(self, question):
-        self.log_question(self.player1, question)
-        self.log_question(self.player2, question)
+    def get_current_time(self):
+        return self.current_time
 
-    def judge_response(self, player, response):
-        if self.player1.score <= 0 or self.player2.score <= 0:
-            return
 
-        self.log_response(player, response, False)
+game = Game()
 
-        if self.player1.score == self.player2.score == self.initial_score:
-            self.log_response(self.player1, response, True)
-            self.player1.score += 1
-        elif player == self.player1:
-            if self.player2.score > 0:
-                self.log_response(self.player2, response, True)
-                self.player2.score += 1
-        elif player == self.player2:
-            if self.player1.score > 0:
-                self.log_response(self.player1, response, True)
-                self.player1.score += 1
 
-        self.player1.score -= 2
-        self.player2.score -= 2
+@app.route('/')
+def index():
+    return render_template('game.html', player1=game.player1, player2=game.player2, question_log=game.question_log, current_time=game.get_current_time())
 
-        if self.player1.score <= 0 or self.player2.score <= 0:
-            self.end_game()
 
-    def end_game(self):
-        self.question_log.append('Game Over')
+@app.route('/start_game', methods=['POST'])
+def start_game():
+    game.reset_game()
+    return 'Game started!'
 
-# Example usage:
-player1 = Player('P1', 5)
-player2 = Player('P2', 5)
-judge = Judge(player1, player2, max_attempts=4, initial_score=5)
 
-judge.start_game()
-judge.send_question('When was the war of 1812?')
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    sender = request.form['sender']
+    message = request.form['message']
 
-# Simulating player responses
-judge.judge_response(player1, '1800')
-judge.judge_response(player2, '1810')
-judge.judge_response(player1, '1812')
+    if sender == game.player1['name']:
+        correct_player = game.player1
+        incorrect_player = game.player2
+    else:
+        correct_player = game.player2
+        incorrect_player = game.player1
 
-# Print the question log
-for log_entry in judge.question_log:
-    print(log_entry)
+    game.current_time += 1
+    game.add_question_log_entry(sender, message)
+
+    if message.lower() == '1812':
+        game.update_scores(correct_player, incorrect_player)
+        game.add_question_log_entry(game.judge['name'], 'OK')
+    else:
+        game.add_question_log_entry(game.judge['name'], 'NO')
+
+    return 'Answer submitted!'
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
